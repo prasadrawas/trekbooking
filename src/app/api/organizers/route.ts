@@ -1,6 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { type NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
+import { createAdminClient } from "@/lib/supabase/admin";
 import { slugify } from "@/lib/utils";
 
 // ─── GET /api/organizers — List active organizers (public) ───────────────────
@@ -12,11 +13,12 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
     const limit = Math.min(100, Math.max(1, parseInt(searchParams.get("limit") ?? "20", 10)));
     const offset = (page - 1) * limit;
 
-    const supabase = await createClient();
+    // Public list — use admin client (bypasses RLS) but select only safe fields
+    const supabase = createAdminClient();
 
     const { data: organizers, error, count } = await (supabase as any)
       .from("organizers")
-      .select("*", { count: "exact" })
+      .select("id, org_name, slug, description, logo_url, is_verified, avg_rating, total_reviews, status, created_at", { count: "exact" })
       .eq("status", "active")
       .order("created_at", { ascending: false })
       .range(offset, offset + limit - 1);

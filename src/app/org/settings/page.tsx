@@ -327,7 +327,7 @@ export default function OrgSettingsPage() {
           <div className="space-y-4">
             <div className="flex items-center gap-2 rounded-lg bg-emerald-50 px-3 py-2 text-xs text-emerald-700">
               <ShieldCheck className="h-4 w-4 shrink-0" />
-              Bank details are encrypted and stored securely. Never shared with third parties.
+              Bank details are stored securely and only visible to you. Never shared with third parties.
             </div>
 
             <div>

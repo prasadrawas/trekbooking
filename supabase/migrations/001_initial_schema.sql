@@ -402,9 +402,10 @@ ALTER TABLE trekker_videos ENABLE ROW LEVEL SECURITY;
 -- profiles
 -- -------------------------------------------------------
 
-CREATE POLICY "profiles: anyone can read"
+-- Users can only read their own full profile (phone, avatar, etc.)
+CREATE POLICY "profiles: users read own"
     ON profiles FOR SELECT
-    USING (TRUE);
+    USING (auth.uid() = id);
 
 CREATE POLICY "profiles: users update own"
     ON profiles FOR UPDATE
@@ -415,9 +416,10 @@ CREATE POLICY "profiles: users update own"
 -- organizers
 -- -------------------------------------------------------
 
-CREATE POLICY "organizers: public read active"
+-- Organizers can read their own full record (including bank details)
+CREATE POLICY "organizers: owner read own"
     ON organizers FOR SELECT
-    USING (status = 'active');
+    USING (profile_id = auth.uid());
 
 CREATE POLICY "organizers: organizer update own"
     ON organizers FOR UPDATE

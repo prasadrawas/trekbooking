@@ -13,9 +13,10 @@ export async function GET(
 
     const supabase = createAdminClient();
 
+    // Public profile — exclude sensitive fields (bank details, commission rate)
     const { data: organizer, error } = await (supabase as any)
       .from("organizers")
-      .select("*")
+      .select("id, profile_id, org_name, slug, description, logo_url, phone, email, is_verified, avg_rating, total_reviews, status, created_at")
       .eq("slug", slug)
       .eq("status", "active")
       .single();
