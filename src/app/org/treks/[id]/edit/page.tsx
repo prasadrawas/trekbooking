@@ -6,6 +6,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import {
   Check, ChevronLeft, ChevronRight, X, Upload,
   Image as ImageIcon, MapPin, Info, Tag, Camera, Eye, Loader2,
+  CalendarDays, Calendar, CalendarRange, CalendarClock, Repeat, Plus,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -14,6 +15,8 @@ import { cn } from "@/lib/utils";
 import { DIFFICULTY_LEVELS, REGIONS } from "@/lib/constants";
 import { CancellationRulesBuilder } from "@/components/shared/cancellation-rules-builder";
 import type { CancellationRule } from "@/components/shared/cancellation-rules-builder";
+import { createBatchEvents, getEventsByTrek, type ScheduleType } from "@/actions/trek-events";
+import { useMemo } from "react";
 // Data fetched via API: GET /api/treks/:id
 
 // ─── Types ───────────────────────────────────────────────────────────────────
@@ -74,7 +77,8 @@ const STEPS = [
   { id: 3, label: "Pricing", icon: Tag },
   { id: 4, label: "Photos", icon: Camera },
   { id: 5, label: "Pickups", icon: MapPin },
-  { id: 6, label: "Review", icon: Eye },
+  { id: 6, label: "Schedule", icon: CalendarDays },
+  { id: 7, label: "Review", icon: Eye },
 ];
 
 // ─── Stepper ─────────────────────────────────────────────────────────────────
@@ -384,7 +388,354 @@ function Step5Pickups({ data, set }: { data: FormData; set: (k: keyof FormData, 
   );
 }
 
-// ─── Step 6 — Review ─────────────────────────────────────────────────────────
+// ─── Step 6 — Schedule Dates ─────────────────────────────────────────────────
+
+const DAYS_OF_WEEK_EDIT = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
+
+const SCHEDULE_OPTIONS_EDIT: { value: ScheduleType; label: string; desc: string; icon: React.ElementType }[] = [
+  { value: "single", label: "Single Date", desc: "One specific date", icon: Calendar },
+  { value: "weekly", label: "Weekly", desc: "Same day every week", icon: CalendarDays },
+  { value: "biweekly", label: "Bi-weekly", desc: "Every other week", icon: CalendarRange },
+  { value: "monthly", label: "Monthly", desc: "Same date each month", icon: CalendarClock },
+  { value: "custom", label: "Custom Dates", desc: "Pick multiple dates", icon: Repeat },
+];
+
+interface ScheduleFormStateEdit {
+  eventDate: string;
+  dayOfWeek: number;
+  dayOfMonth: number;
+  startDate: string;
+  endDateRange: string;
+  customDates: string[];
+  customDateInput: string;
+  reportingTime: string;
+  adultPrice: string;
+  childPrice: string;
+  totalSeats: string;
+}
+
+const INITIAL_SCHEDULE_FORM_EDIT: ScheduleFormStateEdit = {
+  eventDate: "",
+  dayOfWeek: 6,
+  dayOfMonth: 15,
+  startDate: "",
+  endDateRange: "",
+  customDates: [],
+  customDateInput: "",
+  reportingTime: "06:00",
+  adultPrice: "1200",
+  childPrice: "800",
+  totalSeats: "25",
+};
+
+function previewScheduleDatesEdit(scheduleType: ScheduleType, form: ScheduleFormStateEdit): string[] {
+  const dates: string[] = [];
+  const today = new Date().toISOString().split("T")[0];
+  if (scheduleType === "single") {
+    if (form.eventDate && form.eventDate >= today) dates.push(form.eventDate);
+  } else if (scheduleType === "custom") {
+    dates.push(...form.customDates.filter((d) => d >= today).sort());
+  } else if (scheduleType === "weekly" || scheduleType === "biweekly") {
+    if (form.dayOfWeek >= 0 && form.startDate && form.endDateRange) {
+      const start = new Date(form.startDate);
+      const end = new Date(form.endDateRange);
+      const step = scheduleType === "biweekly" ? 14 : 7;
+      const current = new Date(start);
+      while (current.getDay() !== form.dayOfWeek) current.setDate(current.getDate() + 1);
+      while (current <= end) {
+        const d = current.toISOString().split("T")[0];
+        if (d >= today) dates.push(d);
+        current.setDate(current.getDate() + step);
+      }
+    }
+  } else if (scheduleType === "monthly") {
+    if (form.dayOfMonth > 0 && form.startDate && form.endDateRange) {
+      const start = new Date(form.startDate);
+      const end = new Date(form.endDateRange);
+      const targetDay = Math.min(form.dayOfMonth, 28);
+      const current = new Date(start.getFullYear(), start.getMonth(), targetDay);
+      if (current < start) current.setMonth(current.getMonth() + 1);
+      while (current <= end) {
+        const d = current.toISOString().split("T")[0];
+        if (d >= today) dates.push(d);
+        current.setMonth(current.getMonth() + 1);
+      }
+    }
+  }
+  return dates;
+}
+
+interface ScheduledEventRowEdit {
+  id: string;
+  date: string;
+  reportingTime: string;
+  adultPrice: number;
+  totalSeats: number;
+  bookedSeats: number;
+  status: string;
+}
+
+function Step6Schedule({ trekId, adultPrice, childPrice }: { trekId: string; adultPrice: string; childPrice: string }) {
+  const [scheduleType, setScheduleType] = useState<ScheduleType>("single");
+  const [form, setFormState] = useState<ScheduleFormStateEdit>({
+    ...INITIAL_SCHEDULE_FORM_EDIT,
+    adultPrice: adultPrice || INITIAL_SCHEDULE_FORM_EDIT.adultPrice,
+    childPrice: childPrice || INITIAL_SCHEDULE_FORM_EDIT.childPrice,
+  });
+  const [submitting, setSubmitting] = useState(false);
+  const [schedError, setSchedError] = useState("");
+  const [schedSuccess, setSchedSuccess] = useState("");
+  const [events, setEvents] = useState<ScheduledEventRowEdit[]>([]);
+  const [eventsLoading, setEventsLoading] = useState(false);
+
+  const setF = <K extends keyof ScheduleFormStateEdit>(k: K, v: ScheduleFormStateEdit[K]) =>
+    setFormState((prev) => ({ ...prev, [k]: v }));
+
+  const preview = useMemo(() => previewScheduleDatesEdit(scheduleType, form), [scheduleType, form]);
+
+  function addCustomDate() {
+    if (form.customDateInput && !form.customDates.includes(form.customDateInput)) {
+      setF("customDates", [...form.customDates, form.customDateInput].sort());
+      setF("customDateInput", "");
+    }
+  }
+
+  function removeCustomDate(d: string) {
+    setF("customDates", form.customDates.filter((x) => x !== d));
+  }
+
+  async function fetchEvents() {
+    setEventsLoading(true);
+    try {
+      const result = await getEventsByTrek(trekId);
+      if (result.data) {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        setEvents(result.data.map((e: any) => ({
+          id: String(e.id),
+          date: String(e.event_date),
+          reportingTime: String(e.reporting_time ?? "06:00"),
+          adultPrice: Number(e.price ?? 0),
+          totalSeats: Number(e.total_seats ?? 0),
+          bookedSeats: Number(e.booked_seats ?? 0),
+          status: String(e.status ?? "upcoming"),
+        })));
+      }
+    } catch { /* ignore */ } finally {
+      setEventsLoading(false);
+    }
+  }
+
+  useState(() => { fetchEvents(); });
+
+  async function handleAddSchedule() {
+    setSubmitting(true);
+    setSchedError("");
+    setSchedSuccess("");
+
+    const result = await createBatchEvents(trekId, {
+      schedule_type: scheduleType,
+      event_date: form.eventDate,
+      day_of_week: form.dayOfWeek,
+      day_of_month: form.dayOfMonth,
+      start_date: form.startDate,
+      end_date_range: form.endDateRange,
+      custom_dates: form.customDates,
+      reporting_time: form.reportingTime,
+      price: Number(form.adultPrice),
+      child_price: Number(form.childPrice) || undefined,
+      total_seats: Number(form.totalSeats),
+    });
+
+    setSubmitting(false);
+
+    if ("error" in result) {
+      setSchedError(result.error);
+    } else {
+      setSchedSuccess(`${result.count} event${result.count > 1 ? "s" : ""} created successfully!`);
+      setFormState({ ...INITIAL_SCHEDULE_FORM_EDIT, adultPrice: adultPrice || INITIAL_SCHEDULE_FORM_EDIT.adultPrice, childPrice: childPrice || INITIAL_SCHEDULE_FORM_EDIT.childPrice });
+      setScheduleType("single");
+      fetchEvents();
+      setTimeout(() => setSchedSuccess(""), 3000);
+    }
+  }
+
+  return (
+    <div className="space-y-6">
+      <div>
+        <h2 className="text-lg font-semibold text-slate-800">Schedule Trek Dates</h2>
+        <p className="text-sm text-slate-500 mt-1">Add scheduled dates for this trek.</p>
+      </div>
+
+      {/* Schedule type selector */}
+      <div>
+        <label className="block text-sm font-medium text-slate-700 mb-2">Schedule Type</label>
+        <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+          {SCHEDULE_OPTIONS_EDIT.map((opt) => (
+            <button
+              key={opt.value}
+              type="button"
+              onClick={() => { setScheduleType(opt.value); setSchedError(""); }}
+              className={cn(
+                "flex flex-col items-center gap-1 rounded-xl border p-3 text-center transition-all",
+                scheduleType === opt.value
+                  ? "border-emerald-500 bg-emerald-50 ring-1 ring-emerald-500"
+                  : "border-slate-200 hover:border-slate-300"
+              )}
+            >
+              <opt.icon className={cn("h-5 w-5", scheduleType === opt.value ? "text-emerald-600" : "text-slate-400")} />
+              <span className={cn("text-xs font-medium", scheduleType === opt.value ? "text-emerald-700" : "text-slate-600")}>{opt.label}</span>
+              <span className="text-[10px] text-slate-400">{opt.desc}</span>
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {scheduleType === "single" && (
+        <div>
+          <label className="block text-sm font-medium text-slate-700 mb-1.5">Date *</label>
+          <Input type="date" value={form.eventDate} onChange={(e) => setF("eventDate", e.target.value)} />
+        </div>
+      )}
+
+      {(scheduleType === "weekly" || scheduleType === "biweekly") && (
+        <div className="space-y-3">
+          <div>
+            <label className="block text-sm font-medium text-slate-700 mb-1.5">Day of the Week</label>
+            <div className="flex flex-wrap gap-1.5">
+              {DAYS_OF_WEEK_EDIT.map((day, i) => (
+                <button key={day} type="button" onClick={() => setF("dayOfWeek", i)}
+                  className={cn("px-3 py-1.5 text-xs font-medium rounded-lg border transition-colors",
+                    form.dayOfWeek === i ? "bg-emerald-600 border-emerald-600 text-white" : "border-slate-200 text-slate-600 hover:border-emerald-400")}>
+                  {day.slice(0, 3)}
+                </button>
+              ))}
+            </div>
+          </div>
+          <div className="grid grid-cols-2 gap-3">
+            <div><label className="block text-sm font-medium text-slate-700 mb-1.5">From Date *</label><Input type="date" value={form.startDate} onChange={(e) => setF("startDate", e.target.value)} /></div>
+            <div><label className="block text-sm font-medium text-slate-700 mb-1.5">Until Date *</label><Input type="date" value={form.endDateRange} onChange={(e) => setF("endDateRange", e.target.value)} /></div>
+          </div>
+        </div>
+      )}
+
+      {scheduleType === "monthly" && (
+        <div className="space-y-3">
+          <div>
+            <label className="block text-sm font-medium text-slate-700 mb-1.5">Day of Month (1-28)</label>
+            <Input type="number" min={1} max={28} value={form.dayOfMonth} onChange={(e) => setF("dayOfMonth", Math.min(28, Math.max(1, Number(e.target.value))))} />
+          </div>
+          <div className="grid grid-cols-2 gap-3">
+            <div><label className="block text-sm font-medium text-slate-700 mb-1.5">From Month *</label><Input type="date" value={form.startDate} onChange={(e) => setF("startDate", e.target.value)} /></div>
+            <div><label className="block text-sm font-medium text-slate-700 mb-1.5">Until Month *</label><Input type="date" value={form.endDateRange} onChange={(e) => setF("endDateRange", e.target.value)} /></div>
+          </div>
+        </div>
+      )}
+
+      {scheduleType === "custom" && (
+        <div>
+          <label className="block text-sm font-medium text-slate-700 mb-1.5">Pick Dates</label>
+          <div className="flex gap-2 mb-2">
+            <Input type="date" value={form.customDateInput} onChange={(e) => setF("customDateInput", e.target.value)} className="flex-1" />
+            <Button type="button" onClick={addCustomDate} size="sm" className="shrink-0"><Plus className="h-4 w-4" /> Add</Button>
+          </div>
+          {form.customDates.length > 0 && (
+            <div className="flex flex-wrap gap-1.5">
+              {form.customDates.map((d) => (
+                <span key={d} className="inline-flex items-center gap-1 bg-emerald-50 border border-emerald-200 text-emerald-700 text-xs font-medium px-2 py-1 rounded-lg">
+                  {new Date(d).toLocaleDateString("en-IN", { day: "numeric", month: "short" })}
+                  <button type="button" onClick={() => removeCustomDate(d)} className="hover:text-red-600"><X className="h-3 w-3" /></button>
+                </span>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* Common fields */}
+      <div className="border-t border-slate-100 pt-4 space-y-3">
+        <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Event Details (applies to all dates)</p>
+        <div className="grid grid-cols-2 gap-3">
+          <div><label className="block text-sm font-medium text-slate-700 mb-1.5">Reporting Time *</label><Input type="time" value={form.reportingTime} onChange={(e) => setF("reportingTime", e.target.value)} /></div>
+          <div><label className="block text-sm font-medium text-slate-700 mb-1.5">Total Seats *</label><Input type="number" min={1} max={200} value={form.totalSeats} onChange={(e) => setF("totalSeats", e.target.value)} /></div>
+        </div>
+        <div className="grid grid-cols-2 gap-3">
+          <div><label className="block text-sm font-medium text-slate-700 mb-1.5">Adult Price (₹) *</label><Input type="number" min={0} value={form.adultPrice} onChange={(e) => setF("adultPrice", e.target.value)} /></div>
+          <div><label className="block text-sm font-medium text-slate-700 mb-1.5">Child Price (₹)</label><Input type="number" min={0} value={form.childPrice} onChange={(e) => setF("childPrice", e.target.value)} /></div>
+        </div>
+      </div>
+
+      {/* Preview */}
+      {preview.length > 0 && (
+        <div className="bg-slate-50 rounded-xl p-3 border border-slate-100">
+          <p className="text-xs font-semibold text-slate-500 mb-2">Preview — {preview.length} event{preview.length > 1 ? "s" : ""} will be created</p>
+          <div className="flex flex-wrap gap-1.5 max-h-24 overflow-y-auto">
+            {preview.map((d) => (
+              <span key={d} className="text-xs bg-white border border-slate-200 text-slate-600 px-2 py-0.5 rounded-md">
+                {new Date(d).toLocaleDateString("en-IN", { weekday: "short", day: "numeric", month: "short" })}
+              </span>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {schedError && <div className="bg-red-50 border border-red-200 text-red-700 text-sm rounded-lg px-4 py-2.5">{schedError}</div>}
+      {schedSuccess && (
+        <div className="bg-emerald-50 border border-emerald-200 text-emerald-700 text-sm rounded-lg px-4 py-2.5 flex items-center gap-2">
+          <Check className="h-4 w-4" /> {schedSuccess}
+        </div>
+      )}
+
+      <Button type="button" onClick={handleAddSchedule} disabled={submitting || preview.length === 0} className="w-full gap-2">
+        {submitting ? (
+          <><Loader2 className="h-4 w-4 animate-spin" /> Creating...</>
+        ) : (
+          <>Create {preview.length > 0 ? preview.length : ""} Event{preview.length !== 1 ? "s" : ""}</>
+        )}
+      </Button>
+
+      {/* Scheduled events list */}
+      <div className="border-t border-slate-100 pt-4 space-y-3">
+        <div className="flex items-center justify-between">
+          <p className="text-sm font-semibold text-slate-700">Scheduled Events</p>
+          <button type="button" onClick={fetchEvents} className="text-xs text-emerald-600 hover:text-emerald-700 font-medium">Refresh</button>
+        </div>
+        {eventsLoading ? (
+          <div className="flex justify-center py-4"><Loader2 className="h-5 w-5 animate-spin text-slate-400" /></div>
+        ) : events.length === 0 ? (
+          <p className="text-sm text-slate-400 text-center py-3">No events scheduled yet.</p>
+        ) : (
+          <div className="space-y-2">
+            {events.map((ev) => (
+              <div key={ev.id} className="flex items-center justify-between rounded-xl border border-slate-200 bg-white px-4 py-3">
+                <div>
+                  <p className="text-sm font-medium text-slate-800">
+                    {new Date(ev.date).toLocaleDateString("en-IN", { weekday: "short", day: "numeric", month: "short", year: "numeric" })}
+                  </p>
+                  <p className="text-xs text-slate-400 mt-0.5">{ev.reportingTime} · ₹{ev.adultPrice} · {ev.bookedSeats}/{ev.totalSeats} seats</p>
+                </div>
+                <span className={cn(
+                  "inline-flex items-center rounded-full px-2 py-0.5 text-[11px] font-semibold",
+                  ev.status === "upcoming" ? "bg-blue-100 text-blue-700" :
+                  ev.status === "full" ? "bg-amber-100 text-amber-700" :
+                  ev.status === "completed" ? "bg-slate-100 text-slate-600" :
+                  "bg-rose-100 text-rose-700"
+                )}>
+                  {ev.status.charAt(0).toUpperCase() + ev.status.slice(1)}
+                </span>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+
+      <p className="text-xs text-slate-400 text-center">
+        You can also manage all events from the trek dashboard after saving.
+      </p>
+    </div>
+  );
+}
+
+// ─── Step 7 — Review ─────────────────────────────────────────────────────────
 
 function StepReview({ data, onSave, onPublish, isPending, formError }: {
   data: FormData; onSave: () => void; onPublish: () => void; isPending: boolean; formError: string | null;
@@ -585,6 +936,12 @@ export default function EditTrekPage() {
   }
 
   const goNext = async () => {
+    // Step 6 (Schedule) doesn't need API save, just advance
+    if (step === 6) {
+      setDirection(1);
+      setStep(7);
+      return;
+    }
     setSaving(true);
     setFormError(null);
     setSaveMessage("");
@@ -596,7 +953,7 @@ export default function EditTrekPage() {
       setSaveMessage("Progress saved");
       setTimeout(() => setSaveMessage(""), 2000);
       setDirection(1);
-      setStep((s) => Math.min(s + 1, 6));
+      setStep((s) => Math.min(s + 1, 7));
     } catch {
       setFormError("Failed to save.");
     } finally {
@@ -662,12 +1019,13 @@ export default function EditTrekPage() {
             {step === 3 && <Step3 data={data} set={set} />}
             {step === 4 && <Step4 data={data} set={set} />}
             {step === 5 && <Step5Pickups data={data} set={set} />}
-            {step === 6 && <StepReview data={data} onSave={handleSave} onPublish={handlePublish} isPending={isPending} formError={formError} />}
+            {step === 6 && <Step6Schedule trekId={trekId} adultPrice={data.adultPrice} childPrice={data.childPrice} />}
+            {step === 7 && <StepReview data={data} onSave={handleSave} onPublish={handlePublish} isPending={isPending} formError={formError} />}
           </motion.div>
         </AnimatePresence>
       </div>
 
-      {step < 6 && (
+      {step < 7 && (
         <div className="mt-6 flex items-center justify-between">
           <Button variant="outline" onClick={goPrev} disabled={step === 1 || saving} className="gap-2">
             <ChevronLeft className="h-4 w-4" /> Back
@@ -676,15 +1034,17 @@ export default function EditTrekPage() {
             {saveMessage && (
               <span className="text-xs text-emerald-600 font-medium animate-pulse">✓ {saveMessage}</span>
             )}
-            {formError && step < 6 && (
+            {formError && step < 7 && (
               <span className="text-xs text-rose-600 font-medium max-w-[200px] truncate">{formError}</span>
             )}
-            <Button variant="outline" onClick={() => { setDirection(1); setStep((s) => Math.min(s + 1, 6)); }} disabled={saving} className="gap-2">
+            <Button variant="outline" onClick={() => { setDirection(1); setStep((s) => Math.min(s + 1, 7)); }} disabled={saving} className="gap-2">
               Skip <ChevronRight className="h-4 w-4" />
             </Button>
             <Button onClick={goNext} disabled={saving} className="gap-2">
               {saving ? (
                 <><div className="h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent" /> Saving...</>
+              ) : step === 6 ? (
+                <>Next: Review <ChevronRight className="h-4 w-4" /></>
               ) : (
                 <>Save & Next <ChevronRight className="h-4 w-4" /></>
               )}
@@ -692,10 +1052,10 @@ export default function EditTrekPage() {
           </div>
         </div>
       )}
-      {step === 6 && (
+      {step === 7 && (
         <div className="mt-4">
           <button type="button" onClick={goPrev} className="flex items-center gap-1.5 text-sm text-slate-500 hover:text-slate-700 transition-colors">
-            <ChevronLeft className="h-4 w-4" /> Back to Pickup Points
+            <ChevronLeft className="h-4 w-4" /> Back to Schedule
           </button>
         </div>
       )}
