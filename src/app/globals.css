@@ -1,26 +1,94 @@
 @import "tailwindcss";
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
-}
-
 @theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  /* Radius */
+  --radius: 0.5rem;
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+
+  /* Background & Foreground */
+  --color-background: oklch(0.98 0.003 120);
+  --color-foreground: oklch(0.15 0.02 140);
+
+  /* Card */
+  --color-card: oklch(1 0 0);
+  --color-card-foreground: oklch(0.15 0.02 140);
+
+  /* Popover */
+  --color-popover: oklch(1 0 0);
+  --color-popover-foreground: oklch(0.15 0.02 140);
+
+  /* Primary — earthy green (#16a34a range) */
+  --color-primary: oklch(0.52 0.17 145);
+  --color-primary-foreground: oklch(0.98 0.003 120);
+
+  /* Secondary — warm stone */
+  --color-secondary: oklch(0.94 0.008 80);
+  --color-secondary-foreground: oklch(0.28 0.02 140);
+
+  /* Muted — soft slate */
+  --color-muted: oklch(0.95 0.006 120);
+  --color-muted-foreground: oklch(0.50 0.015 140);
+
+  /* Accent — warm amber */
+  --color-accent: oklch(0.88 0.08 75);
+  --color-accent-foreground: oklch(0.28 0.06 70);
+
+  /* Destructive */
+  --color-destructive: oklch(0.55 0.22 25);
+  --color-destructive-foreground: oklch(0.98 0.003 120);
+
+  /* Border, Input, Ring */
+  --color-border: oklch(0.88 0.008 140);
+  --color-input: oklch(0.88 0.008 140);
+  --color-ring: oklch(0.52 0.17 145);
+
+  /* Charts — nature-inspired palette */
+  --color-chart-1: oklch(0.52 0.17 145);   /* forest green */
+  --color-chart-2: oklch(0.65 0.14 160);   /* sage */
+  --color-chart-3: oklch(0.72 0.12 85);    /* warm amber */
+  --color-chart-4: oklch(0.58 0.14 200);   /* mountain blue */
+  --color-chart-5: oklch(0.62 0.16 50);    /* terracotta */
+
+  /* Sidebar */
+  --color-sidebar: oklch(0.96 0.006 130);
+  --color-sidebar-foreground: oklch(0.20 0.02 140);
+  --color-sidebar-primary: oklch(0.52 0.17 145);
+  --color-sidebar-primary-foreground: oklch(0.98 0.003 120);
+  --color-sidebar-accent: oklch(0.90 0.04 120);
+  --color-sidebar-accent-foreground: oklch(0.28 0.05 140);
+  --color-sidebar-border: oklch(0.88 0.008 140);
+  --color-sidebar-ring: oklch(0.52 0.17 145);
+
+  /* Typography */
+  --font-sans: var(--font-geist-sans, ui-sans-serif, system-ui, sans-serif);
+  --font-mono: var(--font-geist-mono, ui-monospace, monospace);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+/* ── Base styles ─────────────────────────────────────────────── */
+
+html {
+  scroll-behavior: smooth;
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  background-color: var(--color-background);
+  color: var(--color-foreground);
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+*,
+*::before,
+*::after {
+  border-color: var(--color-border);
+}
+
+/* Focus ring consistent with primary ring color */
+*:focus-visible {
+  outline: 2px solid var(--color-ring);
+  outline-offset: 2px;
 }

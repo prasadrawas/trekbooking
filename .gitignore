@@ -30,7 +30,7 @@ yarn-debug.log*
 yarn-error.log*
 .pnpm-debug.log*
 
-# env files (can opt-in for committing if needed)
+# env files
 .env*
 
 # vercel
@@ -39,3 +39,28 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# sensitive files
+*.csv
+*.pem
+*.key
+*.p12
+credentials*.json
+serviceAccountKey*.json
+
+# razorpay keys
+razorpay_*.csv
+
+# pitch deck / docs (not needed in repo)
+*.pptx
+*.docx
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
