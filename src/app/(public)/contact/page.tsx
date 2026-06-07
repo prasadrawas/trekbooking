@@ -46,9 +46,9 @@ const CONTACT_INFO = [
   {
     icon: Mail,
     label: "Email Us",
-    value: "hello@trekbooking.in",
+    value: "trekbooking.in@gmail.com",
     sublabel: "We reply within 2 hours",
-    href: "mailto:hello@trekbooking.in",
+    href: "mailto:trekbooking.in@gmail.com",
     color: "bg-blue-50 text-blue-600",
   },
   {

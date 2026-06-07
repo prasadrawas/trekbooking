@@ -89,7 +89,7 @@ function Sidebar({ onClose }: { onClose?: () => void }) {
           </div>
           <div className="flex-1 min-w-0">
             <p className="truncate text-xs font-medium text-slate-200">Super Admin</p>
-            <p className="truncate text-[11px] text-slate-500">admin@trekbooking.in</p>
+            <p className="truncate text-[11px] text-slate-500">trekbooking.in@gmail.com</p>
           </div>
         </div>
       </div>
