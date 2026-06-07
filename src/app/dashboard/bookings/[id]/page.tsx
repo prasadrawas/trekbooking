@@ -111,8 +111,8 @@ function mapApiToBooking(raw: any): BookingShape {
   const adultPrice = evt.price ?? 0;
   const childPrice = evt.child_price ?? adultPrice;
   const breakdown: { label: string; amount: number }[] = [];
-  if (adults > 0) breakdown.push({ label: `Adult × ${adults}`, amount: adults * adultPrice });
-  if (children > 0) breakdown.push({ label: `Child × ${children}`, amount: children * childPrice });
+  if (adults > 0) breakdown.push({ label: `Adult x ${adults}`, amount: adults * adultPrice });
+  if (children > 0) breakdown.push({ label: `Child x ${children}`, amount: children * childPrice });
   const computed = adults * adultPrice + children * childPrice;
   const convenience = total - computed;
   if (convenience > 0) breakdown.push({ label: "Convenience fee", amount: convenience });
@@ -184,6 +184,7 @@ function generateReceipt(booking: BookingShape) {
 <!DOCTYPE html>
 <html>
 <head>
+  <meta charset="UTF-8">
   <title>Receipt - ${booking.bookingNumber}</title>
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -285,8 +286,8 @@ function generateReceipt(booking: BookingShape) {
         <tr><th>Item</th><th>Amount</th></tr>
       </thead>
       <tbody>
-        ${booking.payment.breakdown.map((item) => `<tr><td>${item.label}</td><td>₹${item.amount.toLocaleString("en-IN")}</td></tr>`).join("")}
-        <tr class="total-row"><td>Total Paid</td><td>₹${booking.payment.total.toLocaleString("en-IN")}</td></tr>
+        ${booking.payment.breakdown.map((item) => `<tr><td>${item.label}</td><td>&#8377;${item.amount.toLocaleString("en-IN")}</td></tr>`).join("")}
+        <tr class="total-row"><td>Total Paid</td><td>&#8377;${booking.payment.total.toLocaleString("en-IN")}</td></tr>
       </tbody>
     </table>
   </div>
@@ -324,7 +325,7 @@ function generateReceipt(booking: BookingShape) {
 </body>
 </html>`;
 
-  const blob = new Blob([html], { type: "text/html" });
+  const blob = new Blob([html], { type: "text/html;charset=utf-8" });
   const url = URL.createObjectURL(blob);
   const win = window.open(url, "_blank");
   if (win) {
