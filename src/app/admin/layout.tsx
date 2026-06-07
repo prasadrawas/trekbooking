@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import {
@@ -101,6 +101,15 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   const [mobileOpen, setMobileOpen] = useState(false);
   const pathname = usePathname();
   const router = useRouter();
+
+  // Auth guard — redirect to login if session expired
+  useEffect(() => {
+    fetch("/api/auth/profile")
+      .then((r) => {
+        if (r.status === 401) router.replace("/login");
+      })
+      .catch(() => router.replace("/login"));
+  }, [router]);
 
   const currentPage =
     NAV_ITEMS.find((item) =>

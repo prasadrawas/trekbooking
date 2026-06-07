@@ -33,6 +33,18 @@ export default function OrgLayout({ children }: { children: React.ReactNode }) {
         return;
       }
 
+      // Auth guard — redirect to login if session expired
+      try {
+        const profileRes = await fetch("/api/auth/profile");
+        if (profileRes.status === 401) {
+          router.replace("/login");
+          return;
+        }
+      } catch {
+        router.replace("/login");
+        return;
+      }
+
       const org = await getOrganizer();
 
       if (!org) {

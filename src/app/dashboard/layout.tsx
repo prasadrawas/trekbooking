@@ -48,9 +48,14 @@ export default function DashboardLayout({
   const breadcrumbs = getBreadcrumbs(pathname);
 
   useEffect(() => {
-    // Fetch full profile from API (includes avatar_url)
     fetch("/api/auth/profile")
-      .then((r) => r.ok ? r.json() : null)
+      .then((r) => {
+        if (r.status === 401) {
+          router.replace("/login");
+          return null;
+        }
+        return r.ok ? r.json() : null;
+      })
       .then((data) => {
         if (data?.user) {
           const name = data.user.full_name ?? "";
@@ -64,8 +69,10 @@ export default function DashboardLayout({
           });
         }
       })
-      .catch(() => {});
-  }, []);
+      .catch(() => {
+        router.replace("/login");
+      });
+  }, [router]);
 
   return (
     <div className="flex h-screen overflow-hidden bg-slate-50">
