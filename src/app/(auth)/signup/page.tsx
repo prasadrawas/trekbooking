@@ -1,10 +1,11 @@
 "use client";
 
-import { useActionState, useState } from "react";
+import { useState } from "react";
+import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
 import Link from "next/link";
-import { Eye, EyeOff, Backpack, Mountain } from "lucide-react";
-import { signUp, signInWithGoogle } from "@/actions/auth";
+import { Eye, EyeOff, Backpack, Mountain, Loader2 } from "lucide-react";
+import { signInWithGoogle } from "@/actions/auth";
 
 type Role = "trekker" | "organizer";
 
@@ -33,13 +34,69 @@ function getStrength(password: string): { label: string; color: string; width: s
 }
 
 export default function SignupPage() {
-  const [state, formAction, isPending] = useActionState(signUp, null);
+  const router = useRouter();
   const [role, setRole] = useState<Role>("trekker");
   const [showPassword, setShowPassword] = useState(false);
   const [password, setPassword] = useState("");
   const [agreed, setAgreed] = useState(false);
+  const [isPending, setIsPending] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
 
   const strength = getStrength(password);
+
+  function validateForm(fd: globalThis.FormData): boolean {
+    const errors: Record<string, string> = {};
+    const name = (fd.get("full_name") as string)?.trim();
+    const email = (fd.get("email") as string)?.trim();
+    const pw = fd.get("password") as string;
+    const phone = (fd.get("phone") as string)?.trim();
+
+    if (!name || name.length < 2) errors.full_name = "Name must be at least 2 characters.";
+    if (name && name.length > 100) errors.full_name = "Name is too long (max 100).";
+    if (!email) errors.email = "Email is required.";
+    else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) errors.email = "Invalid email format.";
+    if (!pw) errors.password = "Password is required.";
+    else if (pw.length < 8) errors.password = "Password must be at least 8 characters.";
+    if (phone && !/^[6-9]\d{9}$/.test(phone)) errors.phone = "Must be a valid 10-digit Indian number.";
+    if (!agreed) errors.agreed = "You must agree to the terms.";
+
+    setFieldErrors(errors);
+    return Object.keys(errors).length === 0;
+  }
+
+  async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
+    e.preventDefault();
+    const fd = new FormData(e.currentTarget);
+    if (!validateForm(fd)) return;
+
+    setIsPending(true);
+    setError(null);
+
+    try {
+      const res = await fetch("/api/auth/signup", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          full_name: (fd.get("full_name") as string)?.trim(),
+          email: (fd.get("email") as string)?.trim(),
+          password: fd.get("password") as string,
+          phone: (fd.get("phone") as string)?.trim() || undefined,
+          role,
+        }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        setError(data.error ?? "Signup failed. Please try again.");
+      } else {
+        router.push("/login?message=account_created");
+      }
+    } catch {
+      setError("Something went wrong. Please try again.");
+    } finally {
+      setIsPending(false);
+    }
+  }
 
   return (
     <div className="w-full max-w-sm">
@@ -69,7 +126,7 @@ export default function SignupPage() {
         </motion.div>
 
         {/* Error alert */}
-        {state?.error && (
+        {error && (
           <motion.div
             initial={{ opacity: 0, scale: 0.97 }}
             animate={{ opacity: 1, scale: 1 }}
@@ -82,11 +139,11 @@ export default function SignupPage() {
                 clipRule="evenodd"
               />
             </svg>
-            <p className="text-sm text-red-700">{state.error}</p>
+            <p className="text-sm text-red-700">{error}</p>
           </motion.div>
         )}
 
-        <form action={formAction} className="flex flex-col gap-4">
+        <form onSubmit={handleSubmit} className="flex flex-col gap-4">
           {/* Role selector */}
           <motion.div variants={fadeUp}>
             <input type="hidden" name="role" value={role} />
@@ -131,6 +188,7 @@ export default function SignupPage() {
               placeholder="Full Name"
               className="w-full rounded-xl border border-gray-200 bg-gray-50 px-4 py-2.5 text-sm text-gray-900 placeholder-gray-400 outline-none transition focus:border-green-600 focus:bg-white focus:ring-3 focus:ring-green-600/10"
             />
+            {fieldErrors.full_name && <p className="text-xs text-red-500 mt-1">{fieldErrors.full_name}</p>}
           </motion.div>
 
           {/* Email */}
@@ -144,6 +202,7 @@ export default function SignupPage() {
               placeholder="you@example.com"
               className="w-full rounded-xl border border-gray-200 bg-gray-50 px-4 py-2.5 text-sm text-gray-900 placeholder-gray-400 outline-none transition focus:border-green-600 focus:bg-white focus:ring-3 focus:ring-green-600/10"
             />
+            {fieldErrors.email && <p className="text-xs text-red-500 mt-1">{fieldErrors.email}</p>}
           </motion.div>
 
           {/* Phone (optional) */}
@@ -165,6 +224,7 @@ export default function SignupPage() {
                 className="flex-1 rounded-r-xl border border-gray-200 bg-gray-50 px-4 py-2.5 text-sm text-gray-900 placeholder-gray-400 outline-none transition focus:border-green-600 focus:bg-white focus:ring-3 focus:ring-green-600/10"
               />
             </div>
+            {fieldErrors.phone && <p className="text-xs text-red-500 mt-1">{fieldErrors.phone}</p>}
           </motion.div>
 
           {/* Password + strength */}
@@ -214,6 +274,7 @@ export default function SignupPage() {
                 </span>
               </div>
             )}
+            {fieldErrors.password && <p className="text-xs text-red-500 mt-1">{fieldErrors.password}</p>}
           </motion.div>
 
           {/* Terms */}
@@ -252,6 +313,7 @@ export default function SignupPage() {
                 </Link>
               </span>
             </label>
+            {fieldErrors.agreed && <p className="text-xs text-red-500 mt-1">{fieldErrors.agreed}</p>}
           </motion.div>
 
           {/* Submit */}

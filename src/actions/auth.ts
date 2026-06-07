@@ -52,10 +52,16 @@ export async function signUp(
   const password = formData.get("password") as string;
   const full_name = (formData.get("full_name") as string)?.trim();
   const phone = (formData.get("phone") as string)?.trim() || undefined;
-  const role = (formData.get("role") as string) || "trekker";
+  // CRITICAL: Whitelist roles — never allow "admin" via self-signup
+  const rawRole = (formData.get("role") as string) || "trekker";
+  const role = rawRole === "organizer" ? "organizer" : "trekker";
 
   if (!email || !password || !full_name) {
     return { error: "Full name, email, and password are required." };
+  }
+
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+    return { error: "Invalid email format." };
   }
 
   if (password.length < 8) {
