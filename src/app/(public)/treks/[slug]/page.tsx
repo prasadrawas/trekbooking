@@ -284,6 +284,7 @@ export default function TrekDetailPage() {
   const [isMock, setIsMock] = useState(false)
   const [showAllPhotos, setShowAllPhotos] = useState(false)
   const [showAllDates, setShowAllDates] = useState(false)
+  const [similarTreks, setSimilarTreks] = useState(SIMILAR_TREKS)
 
   useEffect(() => {
     if (!slug) return
@@ -400,6 +401,43 @@ export default function TrekDetailPage() {
             }
           })
           .catch(() => { /* reviews stay empty */ })
+
+        // Fetch similar treks (exclude current trek)
+        fetch(`/api/treks?limit=3`)
+          .then((r) => r.ok ? r.json() : null)
+          .then((trekData) => {
+            if (!trekData?.treks) return
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            const others = trekData.treks
+              .filter((st: any) => st.slug !== slug)
+              .slice(0, 3)
+              // eslint-disable-next-line @typescript-eslint/no-explicit-any
+              .map((st: any) => {
+                let org = st.organizer ?? st.organizers ?? null
+                if (Array.isArray(org)) org = org[0]
+                let coverImg = null
+                if (st.cover_image) coverImg = typeof st.cover_image === "string" ? st.cover_image : st.cover_image.image_url ?? null
+                return {
+                  title: String(st.title ?? ""),
+                  slug: String(st.slug ?? ""),
+                  cover_image: coverImg,
+                  difficulty: String(st.difficulty ?? "moderate"),
+                  duration: Number(st.duration_days ?? 1),
+                  distance: Number(st.distance_km ?? 0),
+                  price: Number(st.next_event?.price ?? st.default_adult_price ?? 0),
+                  rating: Number(org?.avg_rating ?? 0),
+                  total_reviews: Number(st.total_reviews ?? 0),
+                  available_seats: st.next_event ? Number(st.next_event.seats_available ?? 0) : 99,
+                  total_seats: st.next_event ? Number(st.next_event.seats_available ?? 0) : 99,
+                  next_date: st.next_event?.event_date ?? null,
+                  is_child_friendly: Boolean(st.is_child_friendly),
+                  organizer_name: String(org?.org_name ?? ""),
+                  region: String(st.region ?? ""),
+                }
+              })
+            if (others.length > 0) setSimilarTreks(others)
+          })
+          .catch(() => { /* keep mock similar treks */ })
       })
       .catch(() => {
         // Keep MOCK_TREK as fallback
@@ -1083,7 +1121,7 @@ export default function TrekDetailPage() {
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
-            {SIMILAR_TREKS.map((t, i) => (
+            {similarTreks.map((t, i) => (
               <motion.div
                 key={t.slug}
                 initial={{ opacity: 0, y: 20 }}
