@@ -26,7 +26,7 @@ export async function signIn(
 
   // Check for custom redirect URL (e.g., from booking page)
   const redirectTo = formData.get("redirect") as string | null;
-  if (redirectTo && redirectTo.startsWith("/")) {
+  if (redirectTo && redirectTo.startsWith("/") && !redirectTo.startsWith("//") && !redirectTo.includes("://")) {
     redirect(redirectTo);
   }
 

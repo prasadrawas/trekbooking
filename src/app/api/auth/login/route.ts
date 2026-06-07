@@ -26,7 +26,7 @@ export async function POST(request: NextRequest) {
   // Determine redirect URL
   const role = data.user?.user_metadata?.role;
   let redirectTo = "/dashboard";
-  if (redirect && typeof redirect === "string" && redirect.startsWith("/") && !redirect.startsWith("//")) {
+  if (redirect && typeof redirect === "string" && redirect.startsWith("/") && !redirect.startsWith("//") && !redirect.includes("://")) {
     redirectTo = redirect;
   } else if (role === "admin") {
     redirectTo = "/admin";
