@@ -66,6 +66,15 @@ export async function updateSession(request: NextRequest) {
 
     // ── Redirect logged-in users away from auth pages ───────────────────────
     if (pathname === "/login" || pathname === "/signup") {
+      // If there's a redirect param, honor it instead of role-based redirect
+      const redirectParam = request.nextUrl.searchParams.get("redirect");
+      if (redirectParam && redirectParam.startsWith("/")) {
+        const url = request.nextUrl.clone();
+        url.pathname = redirectParam;
+        url.search = "";
+        return NextResponse.redirect(url);
+      }
+
       const url = request.nextUrl.clone();
       if (role === "admin") {
         url.pathname = "/admin";

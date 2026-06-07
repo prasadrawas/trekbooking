@@ -24,7 +24,13 @@ export async function signIn(
     return { error: error.message };
   }
 
-  // Redirect based on role
+  // Check for custom redirect URL (e.g., from booking page)
+  const redirectTo = formData.get("redirect") as string | null;
+  if (redirectTo && redirectTo.startsWith("/")) {
+    redirect(redirectTo);
+  }
+
+  // Default redirect based on role
   const role = data.user?.user_metadata?.role;
   if (role === "admin") {
     redirect("/admin");

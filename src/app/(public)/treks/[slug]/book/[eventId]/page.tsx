@@ -298,6 +298,13 @@ export default function BookingPage() {
 
       const data = await res.json()
 
+      if (res.status === 401) {
+        // Not logged in — redirect to login with return URL
+        const currentPath = `/treks/${slug}/book/${eventId}`
+        router.push(`/login?redirect=${encodeURIComponent(currentPath)}`)
+        return
+      }
+
       if (!res.ok) {
         throw new Error(data.error ?? "Failed to create booking. Please try again.")
       }

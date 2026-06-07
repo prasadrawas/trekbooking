@@ -1,6 +1,7 @@
 "use client";
 
 import { useActionState, useState } from "react";
+import { useSearchParams } from "next/navigation";
 import { motion } from "framer-motion";
 import Link from "next/link";
 import { Eye, EyeOff } from "lucide-react";
@@ -16,13 +17,12 @@ const fadeUp = {
 };
 
 export default function LoginPage() {
+  const searchParams = useSearchParams();
   const [state, formAction, isPending] = useActionState(signIn, null);
   const [showPassword, setShowPassword] = useState(false);
 
-  const urlError =
-    typeof window !== "undefined"
-      ? new URLSearchParams(window.location.search).get("error")
-      : null;
+  const redirectTo = searchParams.get("redirect") ?? "";
+  const urlError = searchParams.get("error");
 
   const errorMessage =
     state?.error ??
@@ -82,6 +82,7 @@ export default function LoginPage() {
 
       {/* Form */}
       <form action={formAction} className="flex flex-col gap-4">
+        {redirectTo && <input type="hidden" name="redirect" value={redirectTo} />}
         {/* Email */}
         <motion.div custom={2} variants={fadeUp} initial="hidden" animate="show">
           <label className="block text-sm font-medium text-gray-700 mb-1.5">
