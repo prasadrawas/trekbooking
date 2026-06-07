@@ -347,7 +347,7 @@ export default function SignupPage() {
 
         {/* Google */}
         <motion.div variants={fadeUp}>
-          <form action={async () => { await signInWithGoogle(); }}>
+          <form action={async () => { await signInWithGoogle(role); }}>
             <button
               type="submit"
               className="w-full flex items-center justify-center gap-3 rounded-xl border border-gray-200 bg-white px-4 py-2.5 text-sm font-medium text-gray-700 transition hover:bg-gray-50 hover:border-gray-300 active:scale-[0.98] focus:outline-none focus:ring-3 focus:ring-gray-200"

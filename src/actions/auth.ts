@@ -100,13 +100,17 @@ export async function signOut(): Promise<void> {
 // ---------------------------------------------------------------------------
 // Sign In with Google (OAuth)
 // ---------------------------------------------------------------------------
-export async function signInWithGoogle(): Promise<{ error: string } | void> {
+export async function signInWithGoogle(role?: string): Promise<{ error: string } | void> {
   const supabase = await createClient();
+
+  // Pass role as query param to the callback so it can be saved after OAuth
+  const safeRole = role === "organizer" ? "organizer" : "trekker";
+  const callbackUrl = `${process.env.NEXT_PUBLIC_BASE_URL ?? "http://localhost:3000"}/auth/callback?role=${safeRole}`;
 
   const { data, error } = await supabase.auth.signInWithOAuth({
     provider: "google",
     options: {
-      redirectTo: `${process.env.NEXT_PUBLIC_BASE_URL ?? "http://localhost:3000"}/auth/callback`,
+      redirectTo: callbackUrl,
       queryParams: {
         access_type: "offline",
         prompt: "consent",
