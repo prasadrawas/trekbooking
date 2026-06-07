@@ -9,6 +9,7 @@ import {
   CalendarCheck,
   Wallet,
   Star,
+  Video,
   Settings,
   BadgeCheck,
 } from "lucide-react";
@@ -19,6 +20,7 @@ const navItems = [
   { label: "Bookings", href: "/org/bookings", icon: CalendarCheck },
   { label: "Payouts", href: "/org/payouts", icon: Wallet },
   { label: "Reviews", href: "/org/reviews", icon: Star },
+  { label: "My Videos", href: "/org/videos", icon: Video },
   { label: "Settings", href: "/org/settings", icon: Settings },
 ];
 

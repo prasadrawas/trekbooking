@@ -15,7 +15,6 @@ const navItems = [
   { label: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
   { label: "My Bookings", href: "/dashboard/bookings", icon: Ticket },
   { label: "My Reviews", href: "/dashboard/reviews", icon: Star },
-  { label: "My Videos", href: "/dashboard/videos", icon: Video },
   { label: "Settings", href: "/dashboard/settings", icon: Settings },
 ];
 
