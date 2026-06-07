@@ -6,12 +6,19 @@ import { razorpay } from "@/lib/razorpay";
 import { COMMISSION_RATE } from "@/lib/constants";
 
 // ─── Auto-complete bookings where trek date has passed ───────────────────────
+// Throttled: runs at most once every 5 minutes to avoid performance tax
+
+let lastAutoCompleteRun = 0;
+const AUTO_COMPLETE_INTERVAL_MS = 5 * 60 * 1000; // 5 minutes
 
 async function autoCompleteBookings() {
+  const now = Date.now();
+  if (now - lastAutoCompleteRun < AUTO_COMPLETE_INTERVAL_MS) return;
+  lastAutoCompleteRun = now;
+
   const admin = createAdminClient();
   const today = new Date().toISOString().split("T")[0];
 
-  // Find confirmed bookings whose trek event_date is in the past
   const { data: pastEvents } = await (admin as any)
     .from("trek_events")
     .select("id")
@@ -22,14 +29,12 @@ async function autoCompleteBookings() {
 
   const pastEventIds = pastEvents.map((e: { id: string }) => e.id);
 
-  // Update confirmed bookings for past events to "completed"
   await (admin as any)
     .from("bookings")
     .update({ status: "completed" })
     .in("trek_event_id", pastEventIds)
     .eq("status", "confirmed");
 
-  // Update the trek_events themselves to "completed"
   await (admin as any)
     .from("trek_events")
     .update({ status: "completed" })
@@ -71,9 +76,6 @@ function generateBookingNumber(): string {
 
 export async function GET(request: NextRequest): Promise<NextResponse> {
   try {
-    // Auto-complete past bookings before fetching
-    await autoCompleteBookings().catch(() => {});
-
     const supabase = await createClient();
 
     const {
@@ -83,6 +85,9 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
     if (authError || !user) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
+
+    // Auto-complete past bookings (throttled — runs at most every 5 minutes, after auth)
+    autoCompleteBookings().catch(() => {}); // fire-and-forget, don't await
 
     const { searchParams } = new URL(request.url);
     const status = searchParams.get("status"); // upcoming | past | cancelled
