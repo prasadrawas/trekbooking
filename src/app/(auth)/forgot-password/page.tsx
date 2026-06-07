@@ -1,10 +1,11 @@
 "use client";
 
-import { useActionState, useState } from "react";
+import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import Link from "next/link";
 import { Mail, ArrowLeft } from "lucide-react";
 import { resetPassword } from "@/actions/auth";
+import { Loader2 } from "lucide-react";
 
 const fadeUp = {
   hidden: { opacity: 0, y: 16 },
@@ -16,12 +17,22 @@ const fadeUp = {
 };
 
 export default function ForgotPasswordPage() {
-  const [state, formAction, isPending] = useActionState(resetPassword, null);
   const [submitted, setSubmitted] = useState(false);
+  const [isPending, setIsPending] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
-  async function handleAction(formData: FormData) {
-    await formAction(formData);
-    if (!state?.error) setSubmitted(true);
+  async function handleAction(e: React.FormEvent<HTMLFormElement>) {
+    e.preventDefault();
+    setIsPending(true);
+    setError(null);
+    const formData = new FormData(e.currentTarget);
+    const result = await resetPassword(null, formData);
+    setIsPending(false);
+    if (result?.error) {
+      setError(result.error);
+    } else {
+      setSubmitted(true);
+    }
   }
 
   return (
@@ -51,7 +62,7 @@ export default function ForgotPasswordPage() {
       </motion.div>
 
       <AnimatePresence mode="wait">
-        {submitted && !state?.error ? (
+        {submitted && !error ? (
           /* Success state */
           <motion.div
             key="success"
@@ -108,7 +119,7 @@ export default function ForgotPasswordPage() {
             </motion.div>
 
             {/* Error alert */}
-            {state?.error && (
+            {error && (
               <motion.div
                 initial={{ opacity: 0, scale: 0.97 }}
                 animate={{ opacity: 1, scale: 1 }}
@@ -121,11 +132,11 @@ export default function ForgotPasswordPage() {
                     clipRule="evenodd"
                   />
                 </svg>
-                <p className="text-sm text-red-700">{state.error}</p>
+                <p className="text-sm text-red-700">{error}</p>
               </motion.div>
             )}
 
-            <form action={handleAction} className="flex flex-col gap-4">
+            <form onSubmit={handleAction} className="flex flex-col gap-4">
               {/* Email */}
               <motion.div custom={2} variants={fadeUp} initial="hidden" animate="show">
                 <label className="block text-sm font-medium text-gray-700 mb-1.5">
