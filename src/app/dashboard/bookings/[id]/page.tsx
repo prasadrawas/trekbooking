@@ -179,6 +179,164 @@ function StatusBadge({ status }: { status: string }) {
   );
 }
 
+function generateReceipt(booking: BookingShape) {
+  const html = `
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Receipt - ${booking.bookingNumber}</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; color: #1a1a1a; padding: 40px; max-width: 700px; margin: 0 auto; }
+    .header { display: flex; justify-content: space-between; align-items: flex-start; border-bottom: 2px solid #059669; padding-bottom: 20px; margin-bottom: 24px; }
+    .logo { font-size: 22px; font-weight: 800; color: #059669; }
+    .logo-sub { font-size: 11px; color: #888; margin-top: 2px; }
+    .receipt-title { text-align: right; }
+    .receipt-title h2 { font-size: 18px; color: #333; }
+    .receipt-title p { font-size: 12px; color: #888; margin-top: 2px; }
+    .section { margin-bottom: 20px; }
+    .section-title { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: #059669; margin-bottom: 10px; }
+    .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+    .field { margin-bottom: 6px; }
+    .field-label { font-size: 10px; color: #999; text-transform: uppercase; letter-spacing: 0.5px; }
+    .field-value { font-size: 13px; font-weight: 500; margin-top: 1px; }
+    .trek-name { font-size: 18px; font-weight: 700; color: #059669; margin-bottom: 4px; }
+    table { width: 100%; border-collapse: collapse; margin-top: 8px; }
+    th { text-align: left; font-size: 10px; text-transform: uppercase; letter-spacing: 0.5px; color: #999; padding: 8px 0; border-bottom: 1px solid #eee; }
+    td { font-size: 13px; padding: 8px 0; border-bottom: 1px solid #f5f5f5; }
+    td:last-child, th:last-child { text-align: right; }
+    .total-row td { font-weight: 700; font-size: 15px; border-top: 2px solid #059669; border-bottom: none; padding-top: 12px; }
+    .badge { display: inline-block; padding: 2px 10px; border-radius: 20px; font-size: 11px; font-weight: 600; }
+    .badge-confirmed { background: #d1fae5; color: #065f46; }
+    .badge-completed { background: #dbeafe; color: #1e40af; }
+    .badge-pending { background: #fef3c7; color: #92400e; }
+    .badge-cancelled { background: #fee2e2; color: #991b1b; }
+    .footer { margin-top: 32px; padding-top: 16px; border-top: 1px solid #eee; text-align: center; font-size: 11px; color: #aaa; }
+    @media print { body { padding: 20px; } }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <div>
+      <div class="logo">TrekBooking</div>
+      <div class="logo-sub">trekbooking.in</div>
+    </div>
+    <div class="receipt-title">
+      <h2>Booking Receipt</h2>
+      <p>${booking.bookingNumber}</p>
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="trek-name">${booking.trek.name}</div>
+    <div style="font-size: 13px; color: #666;">
+      ${booking.trek.date} &bull; ${booking.trek.time} &bull; ${booking.trek.organizer}
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="section-title">Booking Details</div>
+    <div class="grid">
+      <div class="field">
+        <div class="field-label">Status</div>
+        <div class="field-value"><span class="badge badge-${booking.status}">${booking.status.charAt(0).toUpperCase() + booking.status.slice(1)}</span></div>
+      </div>
+      <div class="field">
+        <div class="field-label">Booked On</div>
+        <div class="field-value">${booking.createdAt}</div>
+      </div>
+      <div class="field">
+        <div class="field-label">Participants</div>
+        <div class="field-value">${booking.participants.adults} Adult${booking.participants.adults > 1 ? "s" : ""}${booking.participants.children > 0 ? ` + ${booking.participants.children} Child${booking.participants.children > 1 ? "ren" : ""}` : ""}</div>
+      </div>
+      <div class="field">
+        <div class="field-label">Pickup Point</div>
+        <div class="field-value">${booking.pickup.location || "Direct meetup"} ${booking.pickup.time ? `at ${booking.pickup.time}` : ""}</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="section-title">Contact Information</div>
+    <div class="grid">
+      <div class="field">
+        <div class="field-label">Name</div>
+        <div class="field-value">${booking.contact.name}</div>
+      </div>
+      <div class="field">
+        <div class="field-label">Email</div>
+        <div class="field-value">${booking.contact.email}</div>
+      </div>
+      <div class="field">
+        <div class="field-label">Phone</div>
+        <div class="field-value">${booking.contact.phone}</div>
+      </div>
+      <div class="field">
+        <div class="field-label">Emergency Contact</div>
+        <div class="field-value">${booking.contact.emergencyContact || "—"}</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="section-title">Payment Summary</div>
+    <table>
+      <thead>
+        <tr><th>Item</th><th>Amount</th></tr>
+      </thead>
+      <tbody>
+        ${booking.payment.breakdown.map((item) => `<tr><td>${item.label}</td><td>₹${item.amount.toLocaleString("en-IN")}</td></tr>`).join("")}
+        <tr class="total-row"><td>Total Paid</td><td>₹${booking.payment.total.toLocaleString("en-IN")}</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="section">
+    <div class="grid">
+      <div class="field">
+        <div class="field-label">Payment Method</div>
+        <div class="field-value">${booking.payment.method || "Online"}</div>
+      </div>
+      <div class="field">
+        <div class="field-label">Transaction ID</div>
+        <div class="field-value" style="font-family: monospace; font-size: 11px;">${booking.payment.razorpayId || "—"}</div>
+      </div>
+    </div>
+  </div>
+
+  ${booking.specialRequests ? `
+  <div class="section">
+    <div class="section-title">Special Requests</div>
+    <p style="font-size: 13px; color: #555;">${booking.specialRequests}</p>
+  </div>` : ""}
+
+  ${booking.meetingPoint ? `
+  <div class="section">
+    <div class="section-title">Meeting Point</div>
+    <p style="font-size: 13px; color: #555;">${booking.meetingPoint}</p>
+  </div>` : ""}
+
+  <div class="footer">
+    <p>Thank you for booking with TrekBooking!</p>
+    <p style="margin-top: 4px;">trekbooking.in &bull; trekbooking.in@gmail.com</p>
+    <p style="margin-top: 8px; font-size: 10px;">This is a computer-generated receipt and does not require a signature.</p>
+  </div>
+</body>
+</html>`;
+
+  const blob = new Blob([html], { type: "text/html" });
+  const url = URL.createObjectURL(blob);
+  const win = window.open(url, "_blank");
+  if (win) {
+    win.onload = () => {
+      setTimeout(() => {
+        win.print();
+        URL.revokeObjectURL(url);
+      }, 500);
+    };
+  }
+}
+
 function InfoRow({ icon: Icon, label, value }: { icon: React.ElementType; label: string; value: React.ReactNode }) {
   return (
     <div className="flex items-start gap-3 py-2.5">
@@ -445,7 +603,10 @@ export default function BookingDetailPage() {
 
           {/* Actions */}
           <motion.div variants={item} className="flex flex-col gap-2">
-            <Button className="w-full bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl gap-2">
+            <Button
+              className="w-full bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl gap-2"
+              onClick={() => generateReceipt(booking)}
+            >
               <Download className="w-4 h-4" />
               Download Receipt
             </Button>
