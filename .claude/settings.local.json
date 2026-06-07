@@ -28,7 +28,10 @@
       "Bash(cat:*)",
       "Bash(grep -rn \"middleware\\\\|proxy\" /Users/pr/fvm/sahyadribook/next.config*)",
       "Bash(ls /Users/pr/fvm/sahyadribook/next.config*)",
-      "Bash(git add:*)"
+      "Bash(git add:*)",
+      "Bash(git rm:*)",
+      "Bash(git commit:*)",
+      "Bash(git push:*)"
     ]
   }
 }
