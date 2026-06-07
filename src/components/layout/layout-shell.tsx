@@ -12,7 +12,8 @@ export function LayoutShell({ children }: { children: React.ReactNode }) {
 
   // /org/* hides shell, but /organizers/* is public and shows shell
   const isOrgDashboard = pathname === "/org" || (pathname.startsWith("/org/") && !pathname.startsWith("/organizers"));
-  const hideShell = isOrgDashboard || SHELL_HIDDEN_PREFIXES.some((prefix) => pathname.startsWith(prefix));
+  const isBookingPage = pathname.includes("/book/");
+  const hideShell = isOrgDashboard || isBookingPage || SHELL_HIDDEN_PREFIXES.some((prefix) => pathname.startsWith(prefix));
 
   if (hideShell) {
     return <>{children}</>;
