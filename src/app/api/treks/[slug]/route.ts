@@ -41,7 +41,7 @@ export async function GET(
       `
       *,
       trek_images(id, image_url, alt_text, is_cover, sort_order),
-      organizers!inner(org_name, slug, is_verified, avg_rating, logo_url),
+      organizers!inner(org_name, slug, is_verified, avg_rating, logo_url, created_at),
       trek_events(
         id, event_date, end_date, reporting_time, price, child_price,
         total_seats, booked_seats, status,

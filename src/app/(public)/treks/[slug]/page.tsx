@@ -318,7 +318,9 @@ export default function TrekDetailPage() {
             verified: t.organizers?.is_verified ?? false,
             rating: t.organizers?.avg_rating ?? MOCK_TREK.organizer.rating,
             total_treks: MOCK_TREK.organizer.total_treks,
-            since: MOCK_TREK.organizer.since,
+            since: t.organizers?.created_at
+              ? new Date(t.organizers.created_at).getFullYear().toString()
+              : MOCK_TREK.organizer.since,
           },
           description: t.description ?? MOCK_TREK.description,
           inclusions: t.inclusions?.length ? t.inclusions : MOCK_TREK.inclusions,
