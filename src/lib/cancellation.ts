@@ -21,6 +21,12 @@ export function calculateRefund(
 ): { refundPercent: number; refundAmount: number; reason: string } {
   // Combine event date + reporting time into a Date
   const eventDateTime = new Date(`${eventDate}T${eventTime}:00`);
+
+  // Guard against invalid dates — give full refund if we can't determine the time
+  if (!eventDate || isNaN(eventDateTime.getTime())) {
+    return { refundPercent: 100, refundAmount: totalAmount, reason: "Full refund — event date not available" };
+  }
+
   const now = new Date();
   const hoursUntilTrek = (eventDateTime.getTime() - now.getTime()) / (1000 * 60 * 60);
 
@@ -36,10 +42,12 @@ export function calculateRefund(
     if (hoursUntilTrek >= rule.hours_before) {
       const refundAmount = Math.round((totalAmount * rule.refund_percent) / 100);
       const reason = rule.refund_percent === 100
-        ? `Full refund — cancelled more than ${rule.hours_before}hrs before trek`
+        ? `Full refund — cancelled more than ${rule.hours_before} hours before trek`
         : rule.refund_percent === 0
-        ? `No refund — cancelled less than ${rule.hours_before}hrs before trek`
-        : `${rule.refund_percent}% refund — cancelled ${Math.round(hoursUntilTrek)}hrs before trek`;
+        ? (rule.hours_before === 0
+          ? "No refund — cancelled too close to trek start"
+          : `No refund — cancelled less than ${rule.hours_before} hours before trek`)
+        : `${rule.refund_percent}% refund — cancelled ${Math.round(hoursUntilTrek)} hours before trek`;
       return { refundPercent: rule.refund_percent, refundAmount, reason };
     }
   }
