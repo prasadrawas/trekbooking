@@ -282,11 +282,12 @@ export async function verifyPayment(
 
     if (paymentUpdateError) return { error: paymentUpdateError.message };
 
-    // Confirm booking
+    // Confirm booking — only if still pending (prevent re-confirming cancelled bookings)
     const { error: bookingUpdateError } = await (supabase as any)
       .from("bookings")
       .update({ status: "confirmed" })
-      .eq("id", payment.booking_id);
+      .eq("id", payment.booking_id)
+      .eq("status", "pending");
 
     if (bookingUpdateError) return { error: bookingUpdateError.message };
 
