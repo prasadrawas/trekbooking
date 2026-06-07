@@ -13,6 +13,7 @@ interface UserInfo {
   name: string;
   email: string;
   initials: string;
+  avatarUrl: string;
 }
 
 function getBreadcrumbs(pathname: string) {
@@ -41,25 +42,29 @@ export default function DashboardLayout({
 }) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [userMenuOpen, setUserMenuOpen] = useState(false);
-  const [user, setUser] = useState<UserInfo>({ name: "", email: "", initials: "" });
+  const [user, setUser] = useState<UserInfo>({ name: "", email: "", initials: "", avatarUrl: "" });
   const pathname = usePathname();
   const router = useRouter();
   const breadcrumbs = getBreadcrumbs(pathname);
 
   useEffect(() => {
-    const supabase = createClient();
-    supabase.auth.getUser().then(({ data: { user: u } }) => {
-      if (u) {
-        const name = u.user_metadata?.full_name ?? u.email?.split("@")[0] ?? "";
-        setUser({
-          name,
-          email: u.email ?? "",
-          initials: name
-            ? name.split(" ").map((w: string) => w[0]).join("").toUpperCase().slice(0, 2)
-            : "?",
-        });
-      }
-    });
+    // Fetch full profile from API (includes avatar_url)
+    fetch("/api/auth/profile")
+      .then((r) => r.ok ? r.json() : null)
+      .then((data) => {
+        if (data?.user) {
+          const name = data.user.full_name ?? "";
+          setUser({
+            name,
+            email: data.user.email ?? "",
+            initials: name
+              ? name.split(" ").map((w: string) => w[0]).join("").toUpperCase().slice(0, 2)
+              : "?",
+            avatarUrl: data.user.avatar_url ?? "",
+          });
+        }
+      })
+      .catch(() => {});
   }, []);
 
   return (
@@ -165,9 +170,13 @@ export default function DashboardLayout({
                 onClick={() => setUserMenuOpen((o) => !o)}
                 className="flex items-center gap-2 rounded-lg px-2 py-1.5 hover:bg-slate-100 transition-colors"
               >
-                <div className="flex h-7 w-7 items-center justify-center rounded-full bg-emerald-100 text-xs font-semibold text-emerald-700">
-                  {user.initials}
-                </div>
+                {user.avatarUrl ? (
+                  <img src={user.avatarUrl} alt={user.name} className="h-7 w-7 rounded-full object-cover" />
+                ) : (
+                  <div className="flex h-7 w-7 items-center justify-center rounded-full bg-emerald-100 text-xs font-semibold text-emerald-700">
+                    {user.initials}
+                  </div>
+                )}
                 <span className="hidden sm:block text-sm font-medium text-slate-700">
                   {user.name.split(" ")[0]}
                 </span>
