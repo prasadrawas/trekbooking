@@ -411,19 +411,11 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
       // Release seats on any failure after reservation
       console.error("[POST /api/bookings] Error after seat reservation — releasing seats:", err);
 
-      // Decrement booked_seats directly (no release_seats RPC exists)
-      const { data: evtRaw } = await (supabase as any)
-        .from("trek_events")
-        .select("booked_seats")
-        .eq("id", trek_event_id)
-        .single();
-      if (evtRaw) {
-        const currentBooked = (evtRaw as { booked_seats: number }).booked_seats;
-        await (supabase as any)
-          .from("trek_events")
-          .update({ booked_seats: Math.max(0, currentBooked - totalPersons) })
-          .eq("id", trek_event_id);
-      }
+      // Atomically release seats via RPC
+      await (supabase as any).rpc("release_seats", {
+        p_event_id: trek_event_id,
+        p_num_persons: totalPersons,
+      });
 
       // If booking was inserted, cancel it
       if (bookingId) {

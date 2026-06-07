@@ -35,26 +35,17 @@ interface RazorpayWebhookEvent {
   };
 }
 
-// ─── Helper: decrement booked_seats directly ──────────────────────────────────
+// ─── Helper: atomically release seats via RPC ─────────────────────────────────
 
 async function releaseSeats(
   supabase: any,
   eventId: string,
   numPersons: number
 ): Promise<void> {
-  const { data: evtRaw } = await supabase
-    .from("trek_events")
-    .select("booked_seats")
-    .eq("id", eventId)
-    .single();
-
-  if (evtRaw) {
-    const current = (evtRaw as { booked_seats: number }).booked_seats;
-    await supabase
-      .from("trek_events")
-      .update({ booked_seats: Math.max(0, current - numPersons) })
-      .eq("id", eventId);
-  }
+  await supabase.rpc("release_seats", {
+    p_event_id: eventId,
+    p_num_persons: numPersons,
+  });
 }
 
 // ─── POST handler ─────────────────────────────────────────────────────────────

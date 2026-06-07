@@ -264,24 +264,13 @@ export async function PUT(
       );
     }
 
-    // ── Step 4: Release seats ─────────────────────────────────────────────────
-    // Decrement booked_seats directly (no release_seats RPC exists)
-    const { data: evtRaw } = await (supabase as any)
-      .from("trek_events")
-      .select("booked_seats")
-      .eq("id", booking.trek_event_id)
-      .single();
-    if (evtRaw) {
-      const currentBooked = (evtRaw as { booked_seats: number }).booked_seats;
-      const { error: seatUpdateError } = await (supabase as any)
-        .from("trek_events")
-        .update({ booked_seats: Math.max(0, currentBooked - totalPersons) })
-        .eq("id", booking.trek_event_id);
-      if (seatUpdateError) {
-        console.error("[PUT /api/bookings/:id] Failed to release seats:", seatUpdateError.message);
-        // Non-fatal — booking is cancelled; seat count can be reconciled separately
-      }
-    }
+    // ── Step 4: Release seats atomically via RPC ──────────────────────────────
+    await (supabase as any).rpc("release_seats", {
+      p_event_id: booking.trek_event_id,
+      p_num_persons: totalPersons,
+    }).catch((err: any) => {
+      console.error("[PUT /api/bookings/:id] Failed to release seats:", err?.message);
+    });
 
     // ── Step 5: Initiate Razorpay refund if applicable ────────────────────────
     if (refundAmount > 0) {
