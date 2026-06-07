@@ -27,7 +27,7 @@ const CONFIRMATION = {
     name: "Rajmachi Fort Trek",
     date: "15 Jun 2026",
     time: "6:00 AM",
-    organizer: "Sahyadri Adventures",
+    organizer: "Trek Organizer",
     organizerPhone: "+91 98765 43210",
   },
   participants: { adults: 2, children: 0 },

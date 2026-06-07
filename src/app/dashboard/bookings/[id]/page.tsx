@@ -128,7 +128,7 @@ function mapApiToBooking(raw: any): BookingShape {
       name: trek.title ?? "Trek",
       date: fmtDate(evt.event_date ?? ""),
       time: fmtTime(evt.reporting_time ?? ""),
-      organizer: organizer.org_name ?? "Sahyadri Adventures",
+      organizer: organizer.org_name ?? "Trek Organizer",
       organizerPhone: "",
       duration: "",
       difficulty: "",

@@ -90,7 +90,7 @@ function mapToUpcoming(b: ApiBooking): UpcomingBooking {
     trekName: b.trek_events?.treks?.title ?? "Trek",
     date: formatEventDate(b.trek_events?.event_date ?? ""),
     time: formatReportingTime(b.trek_events?.reporting_time ?? ""),
-    organizer: "Sahyadri Adventures",
+    organizer: "Trek Organizer",
     status: b.status,
     meetingPoint: "",
     participants: b.num_adults + (b.num_children ?? 0),

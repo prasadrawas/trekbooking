@@ -85,7 +85,7 @@ function mapApiBooking(b: ApiBooking): Booking {
     trekName: b.trek_events?.treks?.title ?? "Trek",
     date: fmtDate(b.trek_events?.event_date ?? ""),
     time: fmtTime(b.trek_events?.reporting_time ?? ""),
-    organizer: "Sahyadri Adventures",
+    organizer: "Trek Organizer",
     bookingNumber: b.booking_number,
     adults: b.num_adults,
     children: b.num_children ?? 0,
