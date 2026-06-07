@@ -59,7 +59,7 @@ export default function SignupPage() {
               <path d="m8 3 4 8 5-5 5 15H2L8 3z" />
             </svg>
           </div>
-          <span className="text-xl font-bold text-gray-900 tracking-tight">SahyadriBook</span>
+          <span className="text-xl font-bold text-gray-900 tracking-tight">TrekBooking</span>
         </motion.div>
 
         {/* Heading */}

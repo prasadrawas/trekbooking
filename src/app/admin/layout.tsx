@@ -36,7 +36,7 @@ function Sidebar({ onClose }: { onClose?: () => void }) {
           <Shield className="size-5 text-emerald-400" />
         </div>
         <div>
-          <p className="text-sm font-semibold tracking-tight text-white">SahyadriBook</p>
+          <p className="text-sm font-semibold tracking-tight text-white">TrekBooking</p>
           <p className="text-[11px] text-slate-400 font-medium uppercase tracking-widest">Admin</p>
         </div>
         {onClose && (
@@ -89,7 +89,7 @@ function Sidebar({ onClose }: { onClose?: () => void }) {
           </div>
           <div className="flex-1 min-w-0">
             <p className="truncate text-xs font-medium text-slate-200">Super Admin</p>
-            <p className="truncate text-[11px] text-slate-500">admin@sahyadribook.com</p>
+            <p className="truncate text-[11px] text-slate-500">admin@trekbooking.in</p>
           </div>
         </div>
       </div>

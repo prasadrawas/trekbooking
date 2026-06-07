@@ -46,11 +46,11 @@ export const PAYOUT_DAYS = 3;
 export const FREE_PERIOD_MONTHS = 3;
 
 export const SITE_CONFIG = {
-  name: "SahyadriBook",
+  name: "TrekBooking",
   description:
     "Book weekend treks near Pune. Explore Sahyadri mountains with verified organizers.",
-  url: process.env.NEXT_PUBLIC_BASE_URL || "https://sahyadribook.com",
+  url: process.env.NEXT_PUBLIC_BASE_URL || "https://trekbooking.in",
   ogImage: "/og-image.jpg",
-  email: "hello@sahyadribook.com",
+  email: "hello@trekbooking.in",
   phone: "+91 XXXXX XXXXX",
 } as const;

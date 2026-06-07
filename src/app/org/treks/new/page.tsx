@@ -559,7 +559,7 @@ function Step3({ data, set }: { data: FormData; set: (k: keyof FormData, v: unkn
       </div>
 
       <div className="rounded-xl bg-amber-50 border border-amber-100 p-4 text-sm text-amber-800">
-        <strong>Note:</strong> SahyadriBook charges a 10% platform commission on each booking.
+        <strong>Note:</strong> TrekBooking charges a 10% platform commission on each booking.
         Your payout = Total collected × 90%.
       </div>
     </div>
@@ -1151,7 +1151,7 @@ export default function NewTrekPage({ isEdit = false }: { isEdit?: boolean }) {
         <p className="mt-1 text-sm text-slate-500">
           {isEdit
             ? "Update your trek details below."
-            : "Fill in the details below to list your trek on SahyadriBook."}
+            : "Fill in the details below to list your trek on TrekBooking."}
         </p>
       </div>
 

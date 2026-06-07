@@ -307,7 +307,7 @@ export default function BookingPage() {
         key: data.razorpay.key_id,
         amount: data.razorpay.amount,
         currency: "INR",
-        name: "SahyadriBook",
+        name: "TrekBooking",
         description: `Booking: ${activeEvent.title}`,
         order_id: data.razorpay.order_id,
         prefill: { name, email, contact: phone },

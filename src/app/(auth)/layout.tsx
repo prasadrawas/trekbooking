@@ -66,7 +66,7 @@ export default function AuthLayout({ children }: { children: ReactNode }) {
               </svg>
             </div>
             <span className="text-2xl font-bold text-white tracking-tight">
-              SahyadriBook
+              TrekBooking
             </span>
           </div>
 

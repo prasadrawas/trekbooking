@@ -46,9 +46,9 @@ const CONTACT_INFO = [
   {
     icon: Mail,
     label: "Email Us",
-    value: "hello@sahyadribook.com",
+    value: "hello@trekbooking.in",
     sublabel: "We reply within 2 hours",
-    href: "mailto:hello@sahyadribook.com",
+    href: "mailto:hello@trekbooking.in",
     color: "bg-blue-50 text-blue-600",
   },
   {

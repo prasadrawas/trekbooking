@@ -129,7 +129,7 @@ export function Navbar() {
               <Mountain className="h-7 w-7 stroke-[1.75]" />
             </span>
             <span className={["text-xl font-bold tracking-tight transition-colors duration-300", scrolled ? "text-slate-900" : "text-white"].join(" ")}>
-              SahyadriBook
+              TrekBooking
             </span>
           </Link>
 
@@ -274,7 +274,7 @@ export function Navbar() {
               <div className="flex h-16 items-center justify-between border-b border-slate-100 px-5">
                 <Link href="/" onClick={() => setMobileOpen(false)} className="flex items-center gap-2">
                   <Mountain className="h-6 w-6 text-primary stroke-[1.75]" />
-                  <span className="text-lg font-bold text-slate-900">SahyadriBook</span>
+                  <span className="text-lg font-bold text-slate-900">TrekBooking</span>
                 </Link>
                 <button
                   type="button"

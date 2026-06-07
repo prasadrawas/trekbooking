@@ -173,7 +173,7 @@ export async function processPayout(
             purpose: "vendor_payout",
             queue_if_low_balance: true,
             reference_id: payoutId,
-            narration: "SahyadriBook Trek Payout",
+            narration: "TrekBooking Trek Payout",
           }),
         });
 

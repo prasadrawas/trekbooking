@@ -13,7 +13,7 @@ interface ErrorPageProps {
 export default function ErrorPage({ error, reset }: ErrorPageProps) {
   useEffect(() => {
     // Log to error reporting service in production
-    console.error("[SahyadriBook Error]", error);
+    console.error("[TrekBooking Error]", error);
   }, [error]);
 
   return (

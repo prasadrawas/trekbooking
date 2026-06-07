@@ -132,7 +132,7 @@ export default function OrgLayout({ children }: { children: React.ReactNode }) {
             </button>
             <div className="flex items-center gap-1.5 lg:hidden">
               <Mountain className="h-5 w-5 text-primary" />
-              <span className="text-sm font-bold text-slate-800">SahyadriBook</span>
+              <span className="text-sm font-bold text-slate-800">TrekBooking</span>
             </div>
           </div>
 

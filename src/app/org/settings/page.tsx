@@ -259,7 +259,7 @@ export default function OrgSettingsPage() {
                   URL Slug <span className="text-slate-400 font-normal text-xs">(read-only)</span>
                 </label>
                 <div className="flex h-9 w-full items-center rounded-md border border-input bg-slate-50 px-3 text-sm text-slate-500 overflow-hidden whitespace-nowrap">
-                  <span className="shrink-0">sahyadribook.com/</span><span className="font-medium text-slate-700 truncate">{slug}</span>
+                  <span className="shrink-0">trekbooking.in/</span><span className="font-medium text-slate-700 truncate">{slug}</span>
                 </div>
               </div>
             </div>

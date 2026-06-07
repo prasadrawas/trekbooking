@@ -84,7 +84,7 @@ const SOLUTIONS = [
   {
     icon: Smartphone,
     title: "Online Booking Page",
-    description: "Your own branded page on SahyadriBook. Participants book in 60 seconds with instant payment.",
+    description: "Your own branded page on TrekBooking. Participants book in 60 seconds with instant payment.",
   },
   {
     icon: LayoutDashboard,
@@ -104,7 +104,7 @@ const SOLUTIONS = [
   {
     icon: ShieldCheck,
     title: "Verified Badge",
-    description: "Stand out with a SahyadriBook Verified badge that builds instant trust with new participants.",
+    description: "Stand out with a TrekBooking Verified badge that builds instant trust with new participants.",
   },
   {
     icon: HeartHandshake,
@@ -154,7 +154,7 @@ const TESTIMONIALS = [
     org: "Sahyadri Hikers",
     avatar: "GD",
     rating: 5,
-    text: "In 6 months on SahyadriBook, my monthly bookings went from 8 to 45. The dashboard saves me 10 hours of admin every week.",
+    text: "In 6 months on TrekBooking, my monthly bookings went from 8 to 45. The dashboard saves me 10 hours of admin every week.",
   },
   {
     name: "Prachi Wagh",
@@ -168,7 +168,7 @@ const TESTIMONIALS = [
     org: "PuneWild Expeditions",
     avatar: "SK",
     rating: 5,
-    text: "My treks now appear when people search 'weekend trek Pune'. SahyadriBook gave me visibility I could never build alone.",
+    text: "My treks now appear when people search 'weekend trek Pune'. TrekBooking gave me visibility I could never build alone.",
   },
 ]
 
@@ -225,7 +225,7 @@ export default function PartnerPage() {
             transition={{ delay: 0.2, duration: 0.5 }}
             className="text-xl md:text-2xl text-emerald-100 max-w-2xl mx-auto mb-10 leading-relaxed"
           >
-            Stop managing bookings on WhatsApp. List your treks on SahyadriBook and reach
+            Stop managing bookings on WhatsApp. List your treks on TrekBooking and reach
             thousands of trekkers in Pune every weekend.
           </motion.p>
 
@@ -325,7 +325,7 @@ export default function PartnerPage() {
               Everything You Need to Run a Modern Trek Business
             </h2>
             <p className="text-gray-500 max-w-2xl mx-auto text-lg">
-              SahyadriBook replaces spreadsheets, WhatsApp groups, and manual bank transfers
+              TrekBooking replaces spreadsheets, WhatsApp groups, and manual bank transfers
               with a single, beautiful platform.
             </p>
           </motion.div>
@@ -372,7 +372,7 @@ export default function PartnerPage() {
             Calculate Your Earnings
           </h2>
           <p className="text-gray-500 max-w-xl mx-auto">
-            See exactly how much you could earn on SahyadriBook.
+            See exactly how much you could earn on TrekBooking.
           </p>
         </motion.div>
 
@@ -639,7 +639,7 @@ export default function PartnerPage() {
             className="text-center mb-10"
           >
             <h2 className="text-3xl font-bold text-gray-900 mb-3">
-              Organizers Love SahyadriBook
+              Organizers Love TrekBooking
             </h2>
             <p className="text-gray-500">Don't take our word for it.</p>
           </motion.div>

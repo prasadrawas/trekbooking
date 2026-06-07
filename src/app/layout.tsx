@@ -14,7 +14,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "SahyadriBook — Book Weekend Treks Near Pune",
+  title: "TrekBooking — Book Weekend Treks Near Pune",
   description:
     "Discover and book verified weekend treks in the Sahyadri mountains near Pune. 400+ trek routes, 120+ organizers, instant online payment. Just show up and trek!",
   keywords: [
@@ -32,16 +32,16 @@ export const metadata: Metadata = {
     "easy treks Maharashtra",
   ],
   openGraph: {
-    title: "SahyadriBook — Book Weekend Treks Near Pune",
+    title: "TrekBooking — Book Weekend Treks Near Pune",
     description:
       "400+ verified trek routes in the Sahyadris. Book online, pay securely, just show up.",
     type: "website",
     locale: "en_IN",
-    siteName: "SahyadriBook",
+    siteName: "TrekBooking",
   },
   twitter: {
     card: "summary_large_image",
-    title: "SahyadriBook — Book Weekend Treks Near Pune",
+    title: "TrekBooking — Book Weekend Treks Near Pune",
     description:
       "400+ verified trek routes in the Sahyadris. Book online, pay securely, just show up.",
   },

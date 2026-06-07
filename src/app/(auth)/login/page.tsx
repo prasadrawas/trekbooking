@@ -52,7 +52,7 @@ export default function LoginPage() {
           </svg>
         </div>
         <span className="text-xl font-bold text-gray-900 tracking-tight">
-          SahyadriBook
+          TrekBooking
         </span>
       </motion.div>
 

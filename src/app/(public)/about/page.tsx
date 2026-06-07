@@ -52,7 +52,7 @@ const VALUES = [
     icon: ShieldCheck,
     title: "Safety First",
     description:
-      "Every organizer on SahyadriBook is manually verified. We check certifications, equipment standards, and past safety records before they list a single trek.",
+      "Every organizer on TrekBooking is manually verified. We check certifications, equipment standards, and past safety records before they list a single trek.",
     color: "bg-blue-50 text-blue-600",
   },
   {
@@ -84,7 +84,7 @@ const TEAM = [
     role: "Co-Founder & CEO",
     avatar: "AP",
     gradient: "from-emerald-500 to-teal-600",
-    bio: "Former software engineer turned avid trekker. Completed 150+ Sahyadri treks before founding SahyadriBook.",
+    bio: "Former software engineer turned avid trekker. Completed 150+ Sahyadri treks before founding TrekBooking.",
   },
   {
     name: "Pooja Sharma",
@@ -150,7 +150,7 @@ export default function AboutPage() {
           >
             About{" "}
             <span className="text-transparent bg-clip-text bg-gradient-to-r from-emerald-300 to-teal-200">
-              SahyadriBook
+              TrekBooking
             </span>
           </motion.h1>
 
@@ -210,7 +210,7 @@ export default function AboutPage() {
           <p className="mt-8 text-lg text-gray-600 leading-relaxed">
             The Sahyadri mountains are one of India's most spectacular trekking destinations, yet
             booking a trek here has historically been chaotic — WhatsApp groups, cash-only
-            payments, last-minute cancellations. SahyadriBook changes that. We&apos;re building the
+            payments, last-minute cancellations. TrekBooking changes that. We&apos;re building the
             infrastructure that the Sahyadri trekking community deserves.
           </p>
         </motion.div>
@@ -231,7 +231,7 @@ export default function AboutPage() {
           >
             <h2 className="text-3xl font-bold text-gray-900 mb-3">What We Stand For</h2>
             <p className="text-gray-500 max-w-xl mx-auto">
-              Four principles guide every decision we make at SahyadriBook.
+              Four principles guide every decision we make at TrekBooking.
             </p>
           </motion.div>
 
@@ -368,7 +368,7 @@ export default function AboutPage() {
           <h2 className="text-2xl font-bold mb-3">Ready to Explore the Sahyadris?</h2>
           <p className="text-emerald-200 mb-6">
             Join 12,000+ trekkers who've discovered the magic of the Western Ghats with
-            SahyadriBook.
+            TrekBooking.
           </p>
           <div className="flex flex-col sm:flex-row gap-3 justify-center">
             <Link

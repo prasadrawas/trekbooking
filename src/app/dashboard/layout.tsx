@@ -73,7 +73,7 @@ export default function DashboardLayout({
               <Mountain className="w-4.5 h-4.5 text-white" strokeWidth={2} />
             </div>
             <span className="text-base font-bold text-slate-900 tracking-tight">
-              SahyadriBook
+              TrekBooking
             </span>
           </div>
           <DashboardSidebar user={user} />
@@ -104,7 +104,7 @@ export default function DashboardLayout({
                   <div className="flex items-center justify-center w-8 h-8 rounded-lg bg-emerald-600">
                     <Mountain className="w-4.5 h-4.5 text-white" strokeWidth={2} />
                   </div>
-                  <span className="text-base font-bold text-slate-900">SahyadriBook</span>
+                  <span className="text-base font-bold text-slate-900">TrekBooking</span>
                 </div>
                 <button
                   onClick={() => setSidebarOpen(false)}

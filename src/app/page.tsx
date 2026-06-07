@@ -131,7 +131,7 @@ const TESTIMONIALS = [
     trek: "Rajmachi Fort Trek",
     rating: 5,
     comment:
-      "Booked through SahyadriBook last minute and it was seamless. The organizer was professional, the route was stunning, and the entire payment process took under 2 minutes. Will definitely book again!",
+      "Booked through TrekBooking last minute and it was seamless. The organizer was professional, the route was stunning, and the entire payment process took under 2 minutes. Will definitely book again!",
     avatarLetter: "A",
     avatarColor: "bg-emerald-500",
   },
@@ -544,7 +544,7 @@ function HowItWorksSection() {
   );
 }
 
-// ─── Section: Why SahyadriBook ─────────────────────────────────────────────
+// ─── Section: Why TrekBooking ─────────────────────────────────────────────
 
 const WHY_FEATURES = [
   {
@@ -585,7 +585,7 @@ const WHY_FEATURES = [
   },
 ];
 
-function WhySahyadriBookSection() {
+function WhyTrekBookingSection() {
   const ref = useRef(null);
   const isInView = useInView(ref, { once: true, margin: "-60px" });
 
@@ -603,7 +603,7 @@ function WhySahyadriBookSection() {
             Why trekkers love us
           </span>
           <h2 className="mt-2 text-3xl sm:text-4xl font-extrabold text-slate-900">
-            Why SahyadriBook
+            Why TrekBooking
           </h2>
           <p className="mt-4 text-lg text-slate-500 max-w-xl mx-auto">
             We built the platform trekkers and organizers both deserve.
@@ -705,7 +705,7 @@ function PartnerCTASection() {
             </h2>
 
             <p className="text-lg text-white/70 leading-relaxed max-w-md">
-              Grow your trekking business with SahyadriBook. Reach thousands of
+              Grow your trekking business with TrekBooking. Reach thousands of
               adventure-seekers in Pune and Maharashtra with zero upfront cost.
             </p>
 
@@ -906,7 +906,7 @@ export default function HomePage() {
       <HeroSection />
       <TrendingTreksSection />
       <HowItWorksSection />
-      <WhySahyadriBookSection />
+      <WhyTrekBookingSection />
       <PartnerCTASection />
       <TestimonialsSection />
       <BottomCTASection />

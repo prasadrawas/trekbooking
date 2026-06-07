@@ -42,7 +42,7 @@ export default function OrgOnboardingPage() {
           </div>
           <h1 className="text-2xl font-bold text-gray-900">Set Up Your Organization</h1>
           <p className="text-gray-500 mt-2">
-            Tell us about your trek business to get started on SahyadriBook.
+            Tell us about your trek business to get started on TrekBooking.
           </p>
         </div>
 

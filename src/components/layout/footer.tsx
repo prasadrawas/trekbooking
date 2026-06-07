@@ -25,17 +25,17 @@ const supportLinks = [
 const socialLinks = [
   {
     label: "Instagram",
-    href: "https://instagram.com/sahyadribook",
+    href: "https://instagram.com/trekbooking",
     icon: Globe,
   },
   {
     label: "Twitter",
-    href: "https://twitter.com/sahyadribook",
+    href: "https://twitter.com/trekbooking",
     icon: Share2,
   },
   {
     label: "YouTube",
-    href: "https://youtube.com/@sahyadribook",
+    href: "https://youtube.com/@trekbooking",
     icon: Rss,
   },
 ];
@@ -81,7 +81,7 @@ export function Footer() {
                 <Mountain className="h-7 w-7 stroke-[1.75]" />
               </span>
               <span className="text-xl font-bold text-white group-hover:text-white/90 transition-colors">
-                SahyadriBook
+                TrekBooking
               </span>
             </Link>
 
@@ -123,7 +123,7 @@ export function Footer() {
         {/* Bottom bar */}
         <div className="flex flex-col items-center justify-between gap-3 py-6 sm:flex-row">
           <p className="text-xs text-slate-500">
-            &copy; 2026 SahyadriBook. All rights reserved.
+            &copy; 2026 TrekBooking. All rights reserved.
           </p>
           <p className="text-xs text-slate-500">
             Made with{" "}

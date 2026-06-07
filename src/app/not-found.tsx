@@ -167,7 +167,7 @@ export default function NotFound() {
           transition={{ delay: 0.7, duration: 0.6 }}
           className="mt-12 text-xs text-gray-400"
         >
-          SahyadriBook &mdash; Every trail has a story. This one&apos;s still
+          TrekBooking &mdash; Every trail has a story. This one&apos;s still
           unwritten.
         </motion.p>
       </div>
