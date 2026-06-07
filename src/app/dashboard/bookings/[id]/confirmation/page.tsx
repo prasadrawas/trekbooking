@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
+import { useParams } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   CheckCircle2,
@@ -95,12 +96,48 @@ function ConfettiParticle({ index }: { index: number }) {
 export default function ConfirmationPage() {
   const [showConfetti, setShowConfetti] = useState(false);
 
+  const params = useParams();
+  const bookingId = params?.id as string;
+  const [conf, setConf] = useState(CONFIRMATION);
+
   useEffect(() => {
     const t = setTimeout(() => setShowConfetti(true), 200);
     return () => clearTimeout(t);
   }, []);
 
-  const conf = CONFIRMATION;
+  // Fetch real booking data
+  useEffect(() => {
+    if (!bookingId) return;
+    fetch(`/api/bookings/${bookingId}`)
+      .then((r) => r.ok ? r.json() : null)
+      .then((data) => {
+        if (!data?.booking) return;
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const b: any = data.booking;
+        const evt = b.trek_events ?? {};
+        const trek = evt.treks ?? {};
+        const org = trek.organizers ?? {};
+        const pickup = b.pickup_points ?? {};
+        setConf({
+          bookingNumber: b.booking_number ?? CONFIRMATION.bookingNumber,
+          trek: {
+            name: trek.title ?? CONFIRMATION.trek.name,
+            date: evt.event_date ? new Date(evt.event_date).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" }) : CONFIRMATION.trek.date,
+            time: evt.reporting_time ? evt.reporting_time.slice(0, 5) : CONFIRMATION.trek.time,
+            organizer: org.org_name ?? CONFIRMATION.trek.organizer,
+            organizerPhone: org.phone ?? CONFIRMATION.trek.organizerPhone,
+          },
+          participants: { adults: b.num_adults ?? 1, children: b.num_children ?? 0 },
+          totalAmount: Number(b.total_amount ?? 0),
+          meetingPoint: trek.meeting_point ?? CONFIRMATION.meetingPoint,
+          pickup: {
+            location: pickup.label ?? CONFIRMATION.pickup.location,
+            time: pickup.pickup_time ? pickup.pickup_time.slice(0, 5) : CONFIRMATION.pickup.time,
+          },
+        });
+      })
+      .catch(() => {});
+  }, [bookingId]);
 
   return (
     <div className="flex flex-col items-center py-8">
@@ -286,7 +323,7 @@ export default function ConfirmationPage() {
           transition={{ delay: 1.05 }}
           className="flex flex-col sm:flex-row gap-3"
         >
-          <Link href="/dashboard/bookings/bk-001" className="flex-1">
+          <Link href={`/dashboard/bookings/${bookingId}`} className="flex-1">
             <Button className="w-full bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl gap-2 h-11">
               <Ticket className="w-4 h-4" />
               View Booking
