@@ -274,12 +274,12 @@ export default function OrgBookingDetailPage() {
               <div>
                 <div className="space-y-1.5 mb-3">
                   <div className="flex items-center justify-between text-xs text-slate-500">
-                    <span>Adults ({booking.adults} × {formatPrice(1800)})</span>
+                    <span>Adults ({booking.adults} × {formatPrice(booking.adults > 0 ? Math.round(booking.adultAmount / booking.adults) : 0)})</span>
                     <span>{formatPrice(booking.adultAmount)}</span>
                   </div>
                   {booking.children > 0 && (
                     <div className="flex items-center justify-between text-xs text-slate-500">
-                      <span>Children ({booking.children} × {formatPrice(900)})</span>
+                      <span>Children ({booking.children} × {formatPrice(booking.children > 0 ? Math.round(booking.childAmount / booking.children) : 0)})</span>
                       <span>{formatPrice(booking.childAmount)}</span>
                     </div>
                   )}
