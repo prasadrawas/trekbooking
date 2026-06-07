@@ -344,13 +344,22 @@ export default function OrgBookingDetailPage() {
             <Button variant="outline" onClick={() => setCancelOpen(false)}>Keep Booking</Button>
             <Button
               variant="destructive"
-              disabled={!cancelReason.trim()}
-              onClick={() => {
-                setCancelled(true);
-                setCancelOpen(false);
+              disabled={!cancelReason.trim() || cancelled}
+              onClick={async () => {
+                try {
+                  const res = await fetch(`/api/bookings/${booking.id}`, {
+                    method: "PUT",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ action: "cancel", reason: cancelReason }),
+                  });
+                  if (res.ok) {
+                    setCancelled(true);
+                    setCancelOpen(false);
+                  }
+                } catch { /* ignore */ }
               }}
             >
-              Confirm Cancellation
+              {cancelled ? "Cancelling..." : "Confirm Cancellation"}
             </Button>
           </DialogFooter>
         </DialogContent>

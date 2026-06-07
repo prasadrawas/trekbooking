@@ -368,6 +368,9 @@ export default function BookingDetailPage() {
   const [booking, setBooking] = useState<BookingShape | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [cancelOpen, setCancelOpen] = useState(false);
+  const [cancelReason, setCancelReason] = useState("");
+  const [cancelling, setCancelling] = useState(false);
 
   useEffect(() => {
     if (!id) return;
@@ -626,10 +629,58 @@ export default function BookingDetailPage() {
               <Button
                 variant="outline"
                 className="w-full rounded-xl border-red-200 text-red-500 hover:bg-red-50 gap-2"
+                onClick={() => setCancelOpen(true)}
               >
                 <XCircle className="w-4 h-4" />
                 Cancel Booking
               </Button>
+            )}
+
+            {/* Cancel confirmation dialog */}
+            {cancelOpen && (
+              <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+                <div className="bg-white rounded-2xl p-6 max-w-sm w-full shadow-xl space-y-4">
+                  <h3 className="text-lg font-bold text-gray-900 flex items-center gap-2">
+                    <XCircle className="w-5 h-5 text-red-500" />
+                    Cancel Booking
+                  </h3>
+                  <p className="text-sm text-gray-600">Are you sure? This action cannot be undone. A refund will be calculated based on the cancellation policy.</p>
+                  <textarea
+                    value={cancelReason}
+                    onChange={(e) => setCancelReason(e.target.value)}
+                    placeholder="Reason for cancellation (optional)"
+                    rows={3}
+                    className="w-full rounded-xl border border-gray-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-red-500 resize-none"
+                  />
+                  <div className="flex gap-3">
+                    <Button variant="outline" className="flex-1" onClick={() => setCancelOpen(false)} disabled={cancelling}>
+                      Keep Booking
+                    </Button>
+                    <Button
+                      className="flex-1 bg-red-600 hover:bg-red-700 text-white"
+                      disabled={cancelling}
+                      onClick={async () => {
+                        setCancelling(true);
+                        try {
+                          const res = await fetch(`/api/bookings/${booking?.id}`, {
+                            method: "PUT",
+                            headers: { "Content-Type": "application/json" },
+                            body: JSON.stringify({ action: "cancel", reason: cancelReason }),
+                          });
+                          if (res.ok) {
+                            setBooking((prev) => prev ? { ...prev, status: "cancelled", tab: "cancelled" } : prev);
+                            setCancelOpen(false);
+                          }
+                        } catch { /* ignore */ } finally {
+                          setCancelling(false);
+                        }
+                      }}
+                    >
+                      {cancelling ? "Cancelling..." : "Yes, Cancel"}
+                    </Button>
+                  </div>
+                </div>
+              </div>
             )}
           </motion.div>
         </div>
