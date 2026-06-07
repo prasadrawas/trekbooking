@@ -244,9 +244,12 @@ export default function SettingsPage() {
     setTimeout(() => setToast(null), 3000);
   };
 
+  const [avatarFile, setAvatarFile] = useState<File | null>(null);
+
   const handleAvatarChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
+    setAvatarFile(file);
     const reader = new FileReader();
     reader.onload = (ev) => setAvatarPreview(ev.target?.result as string);
     reader.readAsDataURL(file);
@@ -255,6 +258,23 @@ export default function SettingsPage() {
   const handleSaveProfile = async () => {
     setSavingProfile(true);
     try {
+      let avatarUrl = profile.avatarUrl;
+
+      // Upload avatar if a new file was selected
+      if (avatarFile) {
+        const fd = new FormData();
+        fd.append("file", avatarFile);
+        fd.append("bucket", "avatars");
+        fd.append("folder", "profiles");
+
+        const uploadRes = await fetch("/api/upload", { method: "POST", body: fd });
+        const uploadData = await uploadRes.json();
+        if (uploadRes.ok && uploadData.url) {
+          avatarUrl = uploadData.url;
+          setAvatarFile(null);
+        }
+      }
+
       const res = await fetch("/api/auth/profile", {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
@@ -262,6 +282,7 @@ export default function SettingsPage() {
           full_name: profile.fullName,
           phone: profile.phone,
           city: profile.city,
+          avatar_url: avatarUrl,
         }),
       });
       if (res.ok) {

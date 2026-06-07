@@ -167,14 +167,36 @@ export default function OrgSettingsPage() {
     }
   };
 
+  const [logoFile, setLogoFile] = useState<File | null>(null);
+
   const handleLogoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    if (file) setLogoPreview(URL.createObjectURL(file));
+    if (file) {
+      setLogoFile(file);
+      setLogoPreview(URL.createObjectURL(file));
+    }
   };
 
   const handleSave = async () => {
     setSaving(true);
     try {
+      let logoUrl: string | undefined;
+
+      // Upload logo if a new file was selected
+      if (logoFile) {
+        const fd = new FormData();
+        fd.append("file", logoFile);
+        fd.append("bucket", "organizer-logos");
+        fd.append("folder", "logos");
+
+        const uploadRes = await fetch("/api/upload", { method: "POST", body: fd });
+        const uploadData = await uploadRes.json();
+        if (uploadRes.ok && uploadData.url) {
+          logoUrl = uploadData.url;
+          setLogoFile(null);
+        }
+      }
+
       const res = await fetch("/api/organizers/me", {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
@@ -187,6 +209,7 @@ export default function OrgSettingsPage() {
           bank_account_number: accountNumber,
           bank_ifsc: ifsc,
           default_cancellation_rules: cancellationRules,
+          ...(logoUrl ? { logo_url: logoUrl } : {}),
         }),
       });
       if (res.ok) {
