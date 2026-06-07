@@ -42,8 +42,8 @@ const CONFIRMATION = {
 const WHATS_NEXT = [
   {
     icon: Phone,
-    title: "Check your email",
-    description: "A detailed confirmation has been sent to your registered email address.",
+    title: "Save your booking details",
+    description: "Download the receipt from your booking details page for your records.",
   },
   {
     icon: MapPin,
