@@ -38,6 +38,22 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
     const limit = 20;
     const offset = (page - 1) * limit;
 
+    // Look up organizer ID once — reused for both the paginated query and the summary
+    let orgId: string | null = null;
+    if (isOrganizer) {
+      const { data: organizerRaw } = await (supabase as any)
+        .from("organizers")
+        .select("id")
+        .eq("profile_id", user.id)
+        .single();
+
+      if (!organizerRaw) {
+        return NextResponse.json({ error: "Organizer profile not found" }, { status: 404 });
+      }
+
+      orgId = (organizerRaw as { id: string }).id;
+    }
+
     let query = (supabase as any)
       .from("payouts")
       .select(`
@@ -66,19 +82,8 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
       `, { count: "exact" });
 
     // Scope to organizer's own payouts unless admin
-    if (isOrganizer) {
-      const { data: organizerRaw } = await (supabase as any)
-        .from("organizers")
-        .select("id")
-        .eq("profile_id", user.id)
-        .single();
-
-      if (!organizerRaw) {
-        return NextResponse.json({ error: "Organizer profile not found" }, { status: 404 });
-      }
-
-      const org = organizerRaw as { id: string };
-      query = query.eq("organizer_id", org.id);
+    if (isOrganizer && orgId) {
+      query = query.eq("organizer_id", orgId);
     }
 
     if (statusFilter) {
@@ -94,22 +99,14 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
       return NextResponse.json({ error: "Failed to fetch payouts" }, { status: 500 });
     }
 
-    // Compute summary totals
+    // Compute summary totals — reuse the same org scope, avoid a second org lookup
     let summaryQuery = (supabase as any)
       .from("payouts")
-      .select("payout_amount, status");
+      .select("payout_amount, status")
+      .limit(10000); // Bound the summary query to prevent unbounded fetch
 
-    if (isOrganizer) {
-      const { data: organizerRaw } = await (supabase as any)
-        .from("organizers")
-        .select("id")
-        .eq("profile_id", user.id)
-        .single();
-
-      if (organizerRaw) {
-        const org = organizerRaw as { id: string };
-        summaryQuery = summaryQuery.eq("organizer_id", org.id);
-      }
+    if (isOrganizer && orgId) {
+      summaryQuery = summaryQuery.eq("organizer_id", orgId);
     }
 
     const { data: allPayouts } = await summaryQuery;

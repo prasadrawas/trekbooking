@@ -85,20 +85,17 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
       return NextResponse.json({ error: "org_name, phone, and email are required" }, { status: 400 });
     }
 
-    // Auto-generate unique slug
+    // Auto-generate unique slug — single query to find all conflicts
     const baseSlug = slugify(org_name);
+    const { data: slugRows } = await (supabase as any)
+      .from("organizers")
+      .select("slug")
+      .like("slug", `${baseSlug}%`);
+
+    const takenSlugs = new Set<string>((slugRows ?? []).map((r: { slug: string }) => r.slug));
     let slug = baseSlug;
     let attempt = 0;
-
-    while (true) {
-      const { data: slugConflict } = await (supabase as any)
-        .from("organizers")
-        .select("id")
-        .eq("slug", slug)
-        .single();
-
-      if (!slugConflict) break;
-
+    while (takenSlugs.has(slug)) {
       attempt += 1;
       slug = `${baseSlug}-${attempt}`;
     }

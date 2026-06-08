@@ -46,7 +46,8 @@ export async function GET(
       `)
       .eq("organizer_id", organizer.id)
       .eq("is_published", true)
-      .order("created_at", { ascending: false });
+      .order("created_at", { ascending: false })
+      .limit(50);
 
     if (treksError) {
       console.error("[GET /api/organizers/:slug] Treks fetch error:", treksError.message);

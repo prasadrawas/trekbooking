@@ -23,7 +23,8 @@ async function autoCompleteBookings() {
     .from("trek_events")
     .select("id")
     .lt("event_date", today)
-    .in("status", ["upcoming", "full"]);
+    .in("status", ["upcoming", "full"])
+    .limit(500); // Process max 500 per run to prevent unbounded query
 
   if (!pastEvents || pastEvents.length === 0) return;
 
@@ -96,15 +97,9 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
     const limit = Math.min(50, Math.max(1, parseInt(searchParams.get("limit") ?? "20", 10)));
     const offset = (page - 1) * limit;
 
-    // Determine user role from profile
-    const { data: profileRaw } = await (supabase as any)
-      .from("profiles")
-      .select("role")
-      .eq("id", user.id)
-      .single();
-
-    const profile = profileRaw as { role: string } | null;
-    const isOrganizer = profile?.role === "organizer";
+    // Determine user role from auth metadata (avoids extra DB round-trip)
+    const role = user.user_metadata?.role as string ?? "trekker";
+    const isOrganizer = role === "organizer";
 
     let query = (supabase as any)
       .from("bookings")

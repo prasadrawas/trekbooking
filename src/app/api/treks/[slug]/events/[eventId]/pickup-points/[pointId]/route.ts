@@ -41,7 +41,7 @@ async function resolvePickupPoint(
     .from("pickup_points")
     .select("id")
     .eq("id", pointId)
-    .eq("event_id", eventId)
+    .eq("trek_event_id", eventId)
     .single();
 
   return point ?? null;
@@ -81,13 +81,13 @@ export async function PUT(
 
   // Prevent overwriting protected fields
   delete body.id;
-  delete body.event_id;
+  delete body.trek_event_id;
 
   const { data: updatedPoint, error } = await (supabase as any)
     .from("pickup_points")
     .update({ ...body, updated_at: new Date().toISOString() })
     .eq("id", pointId)
-    .eq("event_id", eventId)
+    .eq("trek_event_id", eventId)
     .select()
     .single();
 
@@ -127,7 +127,7 @@ export async function DELETE(
     .from("pickup_points")
     .delete()
     .eq("id", pointId)
-    .eq("event_id", eventId);
+    .eq("trek_event_id", eventId);
 
   if (error) {
     return NextResponse.json({ error: error.message }, { status: 500 });

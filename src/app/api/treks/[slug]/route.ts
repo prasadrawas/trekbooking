@@ -39,7 +39,8 @@ export async function GET(
     .from("treks")
     .select(
       `
-      *,
+      id, title, slug, description, difficulty, duration_days, min_age, max_altitude,
+      distance_km, is_published, created_at, updated_at,
       trek_images(id, image_url, alt_text, is_cover, sort_order),
       organizers!inner(org_name, slug, is_verified, avg_rating, logo_url, created_at),
       trek_events(

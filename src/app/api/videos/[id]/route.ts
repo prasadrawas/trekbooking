@@ -26,22 +26,6 @@ export async function PUT(
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    // Fetch video to verify ownership
-    const { data: existing, error: fetchError } = await (supabase as any)
-      .from("trekker_videos")
-      .select("id, trekker_id")
-      .eq("id", id)
-      .single();
-
-    if (fetchError || !existing) {
-      return NextResponse.json({ error: "Video not found" }, { status: 404 });
-    }
-
-    const existingVideo = existing as { id: string; trekker_id: string };
-    if (existingVideo.trekker_id !== user.id) {
-      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
-    }
-
     const body = await request.json();
     const { youtube_url, trek_id, title } = body as {
       youtube_url?: string;
@@ -79,12 +63,18 @@ export async function PUT(
       .from("trekker_videos")
       .update(updates)
       .eq("id", id)
+      .eq("trekker_id", user.id)
       .select("*")
       .single();
 
     if (updateError) {
       console.error("[PUT /api/videos/:id] Update error:", updateError.message);
       return NextResponse.json({ error: "Failed to update video" }, { status: 500 });
+    }
+
+    if (!video) {
+      // Row not found or doesn't belong to this user
+      return NextResponse.json({ error: "Video not found or forbidden" }, { status: 404 });
     }
 
     return NextResponse.json({ video });
@@ -109,30 +99,20 @@ export async function DELETE(
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    // Fetch video to verify ownership
-    const { data: existing, error: fetchError } = await (supabase as any)
+    const { error: deleteError, count } = await (supabase as any)
       .from("trekker_videos")
-      .select("id, trekker_id")
+      .delete({ count: "exact" })
       .eq("id", id)
-      .single();
-
-    if (fetchError || !existing) {
-      return NextResponse.json({ error: "Video not found" }, { status: 404 });
-    }
-
-    const existingVideo = existing as { id: string; trekker_id: string };
-    if (existingVideo.trekker_id !== user.id) {
-      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
-    }
-
-    const { error: deleteError } = await (supabase as any)
-      .from("trekker_videos")
-      .delete()
-      .eq("id", id);
+      .eq("trekker_id", user.id);
 
     if (deleteError) {
       console.error("[DELETE /api/videos/:id] Delete error:", deleteError.message);
       return NextResponse.json({ error: "Failed to delete video" }, { status: 500 });
+    }
+
+    if (count === 0) {
+      // Row not found or doesn't belong to this user
+      return NextResponse.json({ error: "Video not found or forbidden" }, { status: 404 });
     }
 
     return NextResponse.json({ success: true });

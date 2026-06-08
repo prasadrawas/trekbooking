@@ -17,22 +17,6 @@ export async function PUT(
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    // Fetch review and verify ownership
-    const { data: existing, error: fetchError } = await (supabase as any)
-      .from("reviews")
-      .select("id, trekker_id")
-      .eq("id", id)
-      .single();
-
-    if (fetchError || !existing) {
-      return NextResponse.json({ error: "Review not found" }, { status: 404 });
-    }
-
-    const review = existing as { id: string; trekker_id: string };
-    if (review.trekker_id !== user.id) {
-      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
-    }
-
     const body = await request.json();
     const { rating, comment } = body as { rating?: number; comment?: string };
 
@@ -54,12 +38,18 @@ export async function PUT(
       .from("reviews")
       .update(updates)
       .eq("id", id)
+      .eq("trekker_id", user.id)
       .select("*")
       .single();
 
     if (updateError) {
       console.error("[PUT /api/reviews/:id] Update error:", updateError.message);
       return NextResponse.json({ error: "Failed to update review" }, { status: 500 });
+    }
+
+    if (!updated) {
+      // Row not found or doesn't belong to this user
+      return NextResponse.json({ error: "Review not found or forbidden" }, { status: 404 });
     }
 
     // Note: organizer avg_rating is updated by DB trigger (on_review_upsert)
@@ -86,30 +76,20 @@ export async function DELETE(
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    // Fetch review to verify ownership
-    const { data: existing, error: fetchError } = await (supabase as any)
+    const { error: deleteError, count } = await (supabase as any)
       .from("reviews")
-      .select("id, trekker_id")
+      .delete({ count: "exact" })
       .eq("id", id)
-      .single();
-
-    if (fetchError || !existing) {
-      return NextResponse.json({ error: "Review not found" }, { status: 404 });
-    }
-
-    const review = existing as { id: string; trekker_id: string };
-    if (review.trekker_id !== user.id) {
-      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
-    }
-
-    const { error: deleteError } = await (supabase as any)
-      .from("reviews")
-      .delete()
-      .eq("id", id);
+      .eq("trekker_id", user.id);
 
     if (deleteError) {
       console.error("[DELETE /api/reviews/:id] Delete error:", deleteError.message);
       return NextResponse.json({ error: "Failed to delete review" }, { status: 500 });
+    }
+
+    if (count === 0) {
+      // Row not found or doesn't belong to this user
+      return NextResponse.json({ error: "Review not found or forbidden" }, { status: 404 });
     }
 
     // Note: organizer avg_rating is updated by DB trigger (on_review_delete)

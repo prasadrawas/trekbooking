@@ -15,7 +15,7 @@ export async function GET(): Promise<NextResponse> {
 
     const { data: organizer, error } = await (supabase as any)
       .from("organizers")
-      .select("*")
+      .select("id, profile_id, org_name, slug, description, phone, email, logo_url, is_verified, avg_rating, bank_account_name, bank_account_number, bank_ifsc, default_cancellation_rules, created_at, updated_at")
       .eq("profile_id", user.id)
       .single();
 
@@ -84,7 +84,7 @@ export async function PUT(request: NextRequest): Promise<NextResponse> {
       .from("organizers")
       .update({ ...updates })
       .eq("profile_id", user.id)
-      .select("*")
+      .select("id, profile_id, org_name, slug, description, phone, email, logo_url, is_verified, avg_rating, bank_account_name, bank_account_number, bank_ifsc, default_cancellation_rules, created_at, updated_at")
       .single();
 
     if (updateError) {

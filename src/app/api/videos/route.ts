@@ -38,7 +38,8 @@ export async function GET(): Promise<NextResponse> {
         )
       `)
       .eq("trekker_id", user.id)
-      .order("created_at", { ascending: false });
+      .order("created_at", { ascending: false })
+      .limit(50);
 
     if (error) {
       console.error("[GET /api/videos] DB error:", error.message);

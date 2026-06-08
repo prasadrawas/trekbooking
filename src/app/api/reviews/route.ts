@@ -16,7 +16,12 @@ export async function GET(): Promise<NextResponse> {
     const { data: reviews, error } = await (supabase as any)
       .from("reviews")
       .select(`
-        *,
+        id,
+        rating,
+        comment,
+        created_at,
+        booking_id,
+        trek_id,
         bookings (
           id,
           trek_events (
@@ -31,7 +36,8 @@ export async function GET(): Promise<NextResponse> {
         )
       `)
       .eq("trekker_id", user.id)
-      .order("created_at", { ascending: false });
+      .order("created_at", { ascending: false })
+      .limit(50);
 
     if (error) {
       console.error("[GET /api/reviews] DB error:", error.message);
