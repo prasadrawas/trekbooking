@@ -39,8 +39,9 @@ export async function GET(
     .from("treks")
     .select(
       `
-      id, title, slug, description, difficulty, duration_days, min_age, max_altitude,
-      distance_km, is_published, created_at, updated_at,
+      id, title, slug, description, difficulty, duration_days, min_child_age, elevation_m,
+      distance_km, region, inclusions, exclusions, things_to_carry, itinerary,
+      is_child_friendly, default_pickup_points, is_published, created_at, updated_at,
       trek_images(id, image_url, alt_text, is_cover, sort_order),
       organizers!inner(org_name, slug, is_verified, avg_rating, logo_url, created_at),
       trek_events(
