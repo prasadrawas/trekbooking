@@ -285,11 +285,11 @@ export default function SignupPage() {
               </div>
               <span className="text-sm text-gray-600 leading-snug">
                 I agree to the{" "}
-                <Link href="/terms" className="font-medium text-green-700 hover:text-green-800">
+                <Link href="/terms" prefetch={false} className="font-medium text-green-700 hover:text-green-800">
                   Terms of Service
                 </Link>{" "}
                 and{" "}
-                <Link href="/privacy" className="font-medium text-green-700 hover:text-green-800">
+                <Link href="/privacy" prefetch={false} className="font-medium text-green-700 hover:text-green-800">
                   Privacy Policy
                 </Link>
               </span>
@@ -347,7 +347,7 @@ export default function SignupPage() {
         {/* Login link */}
         <p className="text-center text-sm text-gray-500 animate-fadeIn stagger-6">
           Already have an account?{" "}
-          <Link href="/login" className="font-semibold text-green-700 hover:text-green-800 transition">
+          <Link href="/login" prefetch={false} className="font-semibold text-green-700 hover:text-green-800 transition">
             Sign in
           </Link>
         </p>

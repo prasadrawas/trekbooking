@@ -186,6 +186,7 @@ export function Navbar() {
                       <div className="py-1">
                         <Link
                           href={getDashboardLink()}
+                          prefetch={false}
                           onClick={() => setUserMenuOpen(false)}
                           className="flex items-center gap-2.5 px-4 py-2.5 text-sm text-slate-700 hover:bg-slate-50 transition-colors"
                         >
@@ -194,6 +195,7 @@ export function Navbar() {
                         </Link>
                         <Link
                           href="/dashboard/settings"
+                          prefetch={false}
                           onClick={() => setUserMenuOpen(false)}
                           className="flex items-center gap-2.5 px-4 py-2.5 text-sm text-slate-700 hover:bg-slate-50 transition-colors"
                         >
@@ -218,12 +220,14 @@ export function Navbar() {
               <>
                 <Link
                   href="/login"
+                  prefetch={false}
                   className={["px-4 py-2 rounded-lg text-sm font-medium transition-colors duration-200", scrolled ? "text-slate-700 hover:text-slate-900 hover:bg-slate-100" : "text-white/90 hover:text-white hover:bg-white/10"].join(" ")}
                 >
                   Login
                 </Link>
                 <Link
                   href="/signup"
+                  prefetch={false}
                   className="px-4 py-2 rounded-lg text-sm font-semibold bg-emerald-600 text-white hover:bg-emerald-700 active:scale-95 transition-all duration-150 shadow-sm"
                 >
                   Sign Up

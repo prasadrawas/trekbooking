@@ -84,6 +84,7 @@ export default function LoginPage() {
             <label className="block text-sm font-medium text-gray-700">Password</label>
             <Link
               href="/forgot-password"
+              prefetch={false}
               className="text-xs font-medium text-green-700 hover:text-green-800 transition"
             >
               Forgot password?
@@ -171,7 +172,7 @@ export default function LoginPage() {
       {/* Sign up link */}
       <p className="text-center text-sm text-gray-500 mt-6 animate-fadeIn stagger-6">
         Don&apos;t have an account?{" "}
-        <Link href="/signup" className="font-semibold text-green-700 hover:text-green-800 transition">
+        <Link href="/signup" prefetch={false} className="font-semibold text-green-700 hover:text-green-800 transition">
           Sign up
         </Link>
       </p>

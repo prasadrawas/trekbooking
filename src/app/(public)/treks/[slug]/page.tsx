@@ -540,7 +540,7 @@ export default function TrekDetailPage() {
             <motion.div variants={fadeUp} initial="hidden" animate="show">
               {/* Breadcrumb */}
               <div className="flex items-center gap-1.5 text-xs text-gray-500 mb-4">
-                <Link href="/treks" className="hover:text-emerald-600 transition-colors">
+                <Link href="/treks" prefetch={false} className="hover:text-emerald-600 transition-colors">
                   Treks
                 </Link>
                 <ChevronRight className="w-3 h-3" />
@@ -584,6 +584,7 @@ export default function TrekDetailPage() {
                   by{" "}
                   <Link
                     href={`/organizers/${trek.organizer.slug}`}
+                    prefetch={false}
                     className="text-emerald-700 font-semibold hover:underline"
                   >
                     {trek.organizer.name}
@@ -1035,6 +1036,7 @@ export default function TrekDetailPage() {
 
                 <Link
                   href={`/organizers/${trek.organizer.slug}`}
+                  prefetch={false}
                   className="flex items-center justify-center gap-2 w-full py-2.5 rounded-xl border border-emerald-300 text-emerald-700 font-semibold text-sm hover:bg-emerald-50 transition-colors"
                 >
                   View Profile
@@ -1100,6 +1102,7 @@ export default function TrekDetailPage() {
                 </p>
                 <Link
                   href="/contact"
+                  prefetch={false}
                   className="inline-flex items-center gap-1.5 text-sm font-semibold text-emerald-700 hover:underline"
                 >
                   Contact Support
@@ -1124,6 +1127,7 @@ export default function TrekDetailPage() {
             <h2 className="text-2xl font-bold text-gray-900">Similar Treks</h2>
             <Link
               href="/treks"
+              prefetch={false}
               className="flex items-center gap-1 text-sm font-semibold text-emerald-700 hover:underline"
             >
               View All
