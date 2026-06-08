@@ -14,8 +14,9 @@ const companyLinks = [
 ];
 
 const supportLinks = [
+  { label: "Cancellation Policy", href: "/cancellation-policy" },
   { label: "Privacy Policy", href: "/privacy-policy" },
-  { label: "Terms", href: "/terms" },
+  { label: "Terms of Service", href: "/terms" },
 ];
 
 const socialLinks: { label: string; href: string; icon: typeof Globe }[] = [

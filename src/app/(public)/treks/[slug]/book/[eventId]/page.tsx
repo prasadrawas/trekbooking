@@ -677,11 +677,11 @@ export default function BookingPage() {
               <AlertCircle className="w-4 h-4 text-amber-500 shrink-0 mt-0.5" />
               <p>
                 By proceeding, you agree to our{" "}
-                <Link href="/about" className="text-emerald-700 underline">
+                <Link href="/cancellation-policy" className="text-emerald-700 underline">
                   Cancellation Policy
                 </Link>{" "}
                 and{" "}
-                <Link href="/about" className="text-emerald-700 underline">
+                <Link href="/terms" className="text-emerald-700 underline">
                   Terms of Service
                 </Link>
                 . Bookings are non-refundable 48 hours before the trek.
