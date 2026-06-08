@@ -96,6 +96,7 @@ export async function updateSession(request: NextRequest) {
   if (pathname.startsWith("/api/") && !pathname.startsWith("/api/webhooks")) {
     // Public API endpoints — no auth needed
     const isPublicApi =
+      pathname.startsWith("/api/auth/") ||
       (pathname === "/api/treks" && request.method === "GET") ||
       (pathname.startsWith("/api/treks/") && request.method === "GET") ||
       (pathname === "/api/organizers" && request.method === "GET") ||
