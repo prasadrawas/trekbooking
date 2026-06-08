@@ -6,7 +6,6 @@ import { Camera, ShieldCheck, CheckCircle, Building2, Bell, User, Loader2, Calen
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
-import { getOrganizer } from "@/actions/organizer";
 import { CancellationRulesBuilder } from "@/components/shared/cancellation-rules-builder";
 import type { CancellationRule } from "@/components/shared/cancellation-rules-builder";
 
@@ -112,7 +111,8 @@ export default function OrgSettingsPage() {
   useEffect(() => {
     async function fetchOrg() {
       try {
-        const org = await getOrganizer();
+        const data = await fetch("/api/organizers/me").then(r => r.ok ? r.json() : null);
+        const org = data?.organizer ?? null;
         if (org) {
           setOrgName(org.org_name ?? "");
           setSlug(org.slug ?? "");

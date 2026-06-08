@@ -7,8 +7,6 @@ import { motion, AnimatePresence } from "framer-motion";
 import { Menu, X, Mountain, Bell, ChevronRight, LogOut } from "lucide-react";
 import { DashboardSidebar } from "@/components/layout/dashboard-sidebar";
 import { cn } from "@/lib/utils";
-import { createClient } from "@/lib/supabase/client";
-
 interface UserInfo {
   name: string;
   email: string;
@@ -212,8 +210,7 @@ export default function DashboardLayout({
                     </Link>
                     <button
                       onClick={async () => {
-                        const supabase = createClient();
-                        await supabase.auth.signOut();
+                        await fetch("/api/auth/logout", { method: "POST" });
                         router.push("/");
                       }}
                       className="flex w-full items-center gap-2 px-3 py-2 text-sm text-red-500 hover:bg-red-50 transition-colors"

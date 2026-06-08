@@ -2,7 +2,6 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
-import { getOrgTreks } from "@/actions/organizer";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   Plus,
@@ -263,9 +262,10 @@ export default function OrgTreksPage() {
   const [isMockData, setIsMockData] = useState(false);
 
   useEffect(() => {
-    getOrgTreks().then((data) => {
+    fetch("/api/organizers/me/treks").then(r => r.ok ? r.json() : null).then((res) => {
+      const data = res?.treks ?? [];
       if (data.length > 0) {
-        const mapped: TrekCard[] = data.map((t) => ({
+        const mapped: TrekCard[] = data.map((t: { id: string; title: string; difficulty: string; is_published: boolean; slug: string; cover_image_url?: string; total_bookings: number }) => ({
           id: t.id,
           title: t.title,
           difficulty: (t.difficulty as TrekCard["difficulty"]) ?? "Moderate",
@@ -285,7 +285,7 @@ export default function OrgTreksPage() {
         setIsMockData(true);
       }
       setLoading(false);
-    });
+    }).catch(() => setLoading(false));
   }, []);
 
   if (loading) {

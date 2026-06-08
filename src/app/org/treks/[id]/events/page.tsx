@@ -15,7 +15,7 @@ import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter,
 } from "@/components/ui/dialog";
 import { cn, formatPrice } from "@/lib/utils";
-import { createBatchEvents, getEventsByTrek, cancelEvent as cancelEventAction, type ScheduleType } from "@/actions/trek-events";
+type ScheduleType = "single" | "weekly" | "biweekly" | "monthly" | "custom";
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
@@ -187,24 +187,29 @@ function ScheduleDialog({
     setError("");
     setSuccess("");
 
-    const result = await createBatchEvents(trekId, {
-      schedule_type: scheduleType,
-      event_date: form.eventDate,
-      day_of_week: form.dayOfWeek,
-      day_of_month: form.dayOfMonth,
-      start_date: form.startDate,
-      end_date_range: form.endDateRange,
-      custom_dates: form.customDates,
-      reporting_time: form.reportingTime,
-      price: Number(form.adultPrice),
-      child_price: Number(form.childPrice) || undefined,
-      total_seats: Number(form.totalSeats),
+    const res = await fetch(`/api/treks/${trekId}/events/batch`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        schedule_type: scheduleType,
+        event_date: form.eventDate,
+        day_of_week: form.dayOfWeek,
+        day_of_month: form.dayOfMonth,
+        start_date: form.startDate,
+        end_date_range: form.endDateRange,
+        custom_dates: form.customDates,
+        reporting_time: form.reportingTime,
+        price: Number(form.adultPrice),
+        child_price: Number(form.childPrice) || undefined,
+        total_seats: Number(form.totalSeats),
+      }),
     });
+    const result = await res.json();
 
     setSubmitting(false);
 
-    if ("error" in result) {
-      setError(result.error);
+    if (!res.ok) {
+      setError(result.error ?? "Failed to create events.");
     } else {
       setSuccess(`${result.count} event${result.count > 1 ? "s" : ""} created successfully!`);
       setTimeout(() => {
@@ -457,11 +462,13 @@ export default function EventsPage() {
 
   async function fetchEvents() {
     try {
-      const result = await getEventsByTrek(trekId);
-      if (result.data && result.data.length > 0) {
+      const res = await fetch(`/api/treks/${trekId}/events`);
+      const result = res.ok ? await res.json() : null;
+      const eventsData = result?.events ?? result?.data ?? [];
+      if (eventsData.length > 0) {
         setEvents(
           // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          result.data.map((e: any) => ({
+          eventsData.map((e: any) => ({
             id: String(e.id),
             date: String(e.event_date),
             endDate: e.end_date ? String(e.end_date) : undefined,
@@ -486,10 +493,10 @@ export default function EventsPage() {
 
   async function handleCancel(id: string) {
     setCancelling(true);
-    const result = await cancelEventAction(id);
+    const res = await fetch(`/api/treks/${trekId}/events/${id}`, { method: "DELETE" });
     setCancelling(false);
     setCancelId(null);
-    if ("success" in result) {
+    if (res.ok) {
       setEvents((prev) => prev.map((e) => (e.id === id ? { ...e, status: "cancelled" } : e)));
     }
   }

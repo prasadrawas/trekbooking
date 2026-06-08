@@ -9,7 +9,6 @@ import { Select } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
 import { Pagination } from "@/components/shared/pagination";
 import { formatPrice } from "@/lib/utils";
-import { getOrgBookings } from "@/actions/organizer";
 
 // ─── Mock Data ─────────────────────────────────────────────────────────────────
 
@@ -90,10 +89,13 @@ export default function OrgBookingsPage() {
   const [isMockData, setIsMockData] = useState(true);
 
   useEffect(() => {
-    getOrgBookings()
+    fetch("/api/bookings")
+      .then((r) => r.ok ? r.json() : null)
       .then((result) => {
-        if (result.bookings.length > 0) {
-          const mapped: Booking[] = result.bookings.map((b) => ({
+        if (!result) return;
+        const bookingList = result.bookings ?? result ?? [];
+        if (bookingList.length > 0) {
+          const mapped: Booking[] = bookingList.map((b: { id: string; booking_number: string; booking_name: string; trek_title?: string; event_date?: string; created_at: string; num_adults: number; num_children: number; total_amount: number; status: string }) => ({
             id: b.id,
             bookingNo: b.booking_number,
             trekker: b.booking_name,

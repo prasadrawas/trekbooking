@@ -5,7 +5,6 @@ import { motion } from "framer-motion";
 import { Star, Filter } from "lucide-react";
 import { Select } from "@/components/ui/select";
 import { RatingStars } from "@/components/shared/rating-stars";
-import { getOrgReviewsData } from "@/actions/organizer";
 
 // ─── Mock Data ─────────────────────────────────────────────────────────────────
 
@@ -146,10 +145,11 @@ export default function OrgReviewsPage() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    getOrgReviewsData().then((data) => {
+    fetch("/api/organizers/me/reviews").then(r => r.ok ? r.json() : null).then((data) => {
       if (data && data.reviews.length > 0) {
         setReviews(
-          data.reviews.map((r) => ({
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          data.reviews.map((r: any) => ({
             id: r.id,
             trek: r.trek_title ?? "Unknown Trek",
             trekker: r.trekker_name ?? "Anonymous",

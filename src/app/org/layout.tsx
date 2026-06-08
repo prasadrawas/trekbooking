@@ -5,10 +5,8 @@ import { usePathname, useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import Link from "next/link";
 import { Bell, Menu, X, Mountain, LogOut, Settings } from "lucide-react";
-import { createClient } from "@/lib/supabase/client";
 import { OrgSidebar } from "@/components/layout/org-sidebar";
 import { cn } from "@/lib/utils";
-import { getOrganizer } from "@/actions/organizer";
 
 interface OrgInfo {
   name: string;
@@ -45,7 +43,7 @@ export default function OrgLayout({ children }: { children: React.ReactNode }) {
         return;
       }
 
-      const org = await getOrganizer();
+      const org = await fetch("/api/organizers/me").then(r => r.ok ? r.json() : null).then(d => d?.organizer ?? null);
 
       if (!org) {
         router.replace("/org/onboarding");
@@ -199,8 +197,7 @@ export default function OrgLayout({ children }: { children: React.ReactNode }) {
                     <button
                       type="button"
                       onClick={async () => {
-                        const supabase = createClient();
-                        await supabase.auth.signOut();
+                        await fetch("/api/auth/logout", { method: "POST" });
                         router.push("/");
                       }}
                       className="flex w-full items-center gap-2.5 px-3 py-2.5 text-sm text-rose-500 hover:bg-rose-50 transition-colors"

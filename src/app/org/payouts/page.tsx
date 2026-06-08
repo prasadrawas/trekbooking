@@ -14,7 +14,6 @@ import {
 import { Pagination } from "@/components/shared/pagination";
 import { formatPrice } from "@/lib/utils";
 import { COMMISSION_RATE } from "@/lib/constants";
-import { getOrgPayoutsData } from "@/actions/organizer";
 
 // ─── Mock Data ─────────────────────────────────────────────────────────────────
 
@@ -180,7 +179,7 @@ export default function PayoutsPage() {
       })
       .catch(() => { /* keep null */ });
 
-    getOrgPayoutsData().then((data) => {
+    fetch("/api/payouts").then(r => r.ok ? r.json() : null).then((data) => {
       if (data && data.payouts.length > 0) {
         setPayouts(
           // eslint-disable-next-line @typescript-eslint/no-explicit-any

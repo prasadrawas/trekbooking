@@ -4,7 +4,6 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
 import { Mountain, Building2, Phone, Mail, FileText, ArrowRight, Loader2 } from "lucide-react";
-import { createOrganizer } from "@/actions/organizer";
 
 export default function OrgOnboardingPage() {
   const router = useRouter();
@@ -17,10 +16,20 @@ export default function OrgOnboardingPage() {
     setError("");
 
     const formData = new FormData(e.currentTarget);
-    const result = await createOrganizer(formData);
+    const res = await fetch("/api/organizers", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        org_name: formData.get("org_name"),
+        phone: formData.get("phone"),
+        email: formData.get("email"),
+        description: formData.get("description"),
+      }),
+    });
+    const result = await res.json();
 
-    if ("error" in result) {
-      setError(result.error);
+    if (!res.ok) {
+      setError(result.error ?? "Something went wrong.");
       setLoading(false);
     } else {
       router.push("/org");

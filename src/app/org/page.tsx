@@ -15,7 +15,6 @@ import {
   Loader2,
 } from "lucide-react";
 import { formatPrice } from "@/lib/utils";
-import { getOrgDashboardData } from "@/actions/organizer";
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
@@ -165,7 +164,7 @@ export default function OrgHomePage() {
   useEffect(() => {
     async function fetchData() {
       try {
-        const data = await getOrgDashboardData();
+        const data = await fetch("/api/organizers/me/dashboard").then(r => r.ok ? r.json() : null);
 
         if (data) {
           setOrgName(data.orgName);

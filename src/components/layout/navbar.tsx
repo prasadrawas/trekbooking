@@ -83,8 +83,7 @@ export function Navbar() {
   }, []);
 
   async function handleSignOut() {
-    const supabase = createClient();
-    await supabase.auth.signOut();
+    await fetch("/api/auth/logout", { method: "POST" });
     setUser(null);
     setUserMenuOpen(false);
     setMobileOpen(false);

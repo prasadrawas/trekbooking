@@ -30,7 +30,7 @@ import { cn } from "@/lib/utils";
 import { DIFFICULTY_LEVELS, REGIONS, DURATION_OPTIONS } from "@/lib/constants";
 import { CancellationRulesBuilder } from "@/components/shared/cancellation-rules-builder";
 import type { CancellationRule } from "@/components/shared/cancellation-rules-builder";
-import { createBatchEvents, getEventsByTrek, type ScheduleType } from "@/actions/trek-events";
+type ScheduleType = "single" | "weekly" | "biweekly" | "monthly" | "custom";
 import { useMemo } from "react";
 
 // ─── Types ─────────────────────────────────────────────────────────────────────
@@ -989,19 +989,19 @@ function Step6Schedule({
     if (!trekId) return;
     setEventsLoading(true);
     try {
-      const result = await getEventsByTrek(trekId);
-      if (result.data) {
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        setEvents(result.data.map((e: any) => ({
-          id: String(e.id),
-          date: String(e.event_date),
-          reportingTime: String(e.reporting_time ?? "06:00"),
-          adultPrice: Number(e.price ?? 0),
-          totalSeats: Number(e.total_seats ?? 0),
-          bookedSeats: Number(e.booked_seats ?? 0),
-          status: String(e.status ?? "upcoming"),
-        })));
-      }
+      const res = await fetch(`/api/treks/${trekId}/events`);
+      const result = res.ok ? await res.json() : null;
+      const eventsData = result?.events ?? result?.data ?? [];
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      setEvents(eventsData.map((e: any) => ({
+        id: String(e.id),
+        date: String(e.event_date),
+        reportingTime: String(e.reporting_time ?? "06:00"),
+        adultPrice: Number(e.price ?? 0),
+        totalSeats: Number(e.total_seats ?? 0),
+        bookedSeats: Number(e.booked_seats ?? 0),
+        status: String(e.status ?? "upcoming"),
+      })));
     } catch { /* ignore */ } finally {
       setEventsLoading(false);
     }
@@ -1019,24 +1019,29 @@ function Step6Schedule({
     setSchedError("");
     setSchedSuccess("");
 
-    const result = await createBatchEvents(trekId, {
-      schedule_type: scheduleType,
-      event_date: form.eventDate,
-      day_of_week: form.dayOfWeek,
-      day_of_month: form.dayOfMonth,
-      start_date: form.startDate,
-      end_date_range: form.endDateRange,
-      custom_dates: form.customDates,
-      reporting_time: form.reportingTime,
-      price: Number(form.adultPrice),
-      child_price: Number(form.childPrice) || undefined,
-      total_seats: Number(form.totalSeats),
+    const res = await fetch(`/api/treks/${trekId}/events/batch`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        schedule_type: scheduleType,
+        event_date: form.eventDate,
+        day_of_week: form.dayOfWeek,
+        day_of_month: form.dayOfMonth,
+        start_date: form.startDate,
+        end_date_range: form.endDateRange,
+        custom_dates: form.customDates,
+        reporting_time: form.reportingTime,
+        price: Number(form.adultPrice),
+        child_price: Number(form.childPrice) || undefined,
+        total_seats: Number(form.totalSeats),
+      }),
     });
+    const result = await res.json();
 
     setSubmitting(false);
 
-    if ("error" in result) {
-      setSchedError(result.error);
+    if (!res.ok) {
+      setSchedError(result.error ?? "Failed to create events.");
     } else {
       setSchedSuccess(`${result.count} event${result.count > 1 ? "s" : ""} created successfully!`);
       setFormState({ ...INITIAL_SCHEDULE_FORM, adultPrice: adultPrice || INITIAL_SCHEDULE_FORM.adultPrice, childPrice: childPrice || INITIAL_SCHEDULE_FORM.childPrice });

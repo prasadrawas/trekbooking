@@ -20,7 +20,12 @@ async function verifyTrekOwnership(supabase: any, slug: string, userId: string) 
   return trek;
 }
 
+// UUID v4 pattern
+const UUID_RE =
+  /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
 // GET /api/treks/:slug/events — List events for a trek
+// Accepts either a slug or a trek UUID as the :slug param.
 // Public: only published upcoming events; owner: all events
 export async function GET(
   request: NextRequest,
@@ -29,11 +34,12 @@ export async function GET(
   const { slug } = await params;
   const supabase = await createClient();
 
-  // Resolve trek id
+  // Resolve trek — support both slug and UUID
+  const isUuid = UUID_RE.test(slug);
   const { data: trek } = await (supabase as any)
     .from("treks")
     .select("id, organizers!inner(profile_id)")
-    .eq("slug", slug)
+    .eq(isUuid ? "id" : "slug", slug)
     .single();
 
   if (!trek) {
