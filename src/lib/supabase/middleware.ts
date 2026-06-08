@@ -124,17 +124,8 @@ export async function updateSession(request: NextRequest) {
         );
       }
 
-      // /api/organizers/me — organizer only
-      if (
-        pathname === "/api/organizers/me" &&
-        role !== "organizer" &&
-        role !== "admin"
-      ) {
-        return NextResponse.json(
-          { error: "Organizer access required" },
-          { status: 403 }
-        );
-      }
+      // /api/organizers/me — organizer or any authenticated user (route checks ownership)
+      // Removed middleware block — the route handler verifies the organizer record exists
 
       // POST /api/organizers — organizer role only
       if (
