@@ -45,6 +45,7 @@ function FooterLinkGroup({
           <li key={link.href}>
             <Link
               href={link.href}
+              prefetch={false}
               className="text-sm text-slate-400 hover:text-white transition-colors duration-200"
             >
               {link.label}
@@ -64,7 +65,7 @@ export function Footer() {
         <div className="grid grid-cols-1 gap-10 py-14 sm:grid-cols-2 lg:grid-cols-4">
           {/* Column 1: Brand */}
           <div className="flex flex-col gap-5 sm:col-span-2 lg:col-span-1">
-            <Link href="/" className="flex items-center gap-2 group w-fit">
+            <Link href="/" prefetch={false} className="flex items-center gap-2 group w-fit">
               <span className="text-primary group-hover:text-primary/80 transition-colors">
                 <Mountain className="h-7 w-7 stroke-[1.75]" />
               </span>

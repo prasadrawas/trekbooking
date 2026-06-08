@@ -140,6 +140,7 @@ export function Navbar() {
               <li key={link.href}>
                 <Link
                   href={link.href}
+                  prefetch={false}
                   className={["px-4 py-2 rounded-lg text-sm font-medium transition-colors duration-200", scrolled ? "text-slate-600 hover:text-slate-900 hover:bg-slate-100" : "text-white/90 hover:text-white hover:bg-white/10"].join(" ")}
                 >
                   {link.label}
