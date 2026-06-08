@@ -24,7 +24,7 @@ export function Navbar() {
   const router = useRouter();
   const pathname = usePathname();
   // Pages with dark/image hero sections — navbar starts transparent to blend
-  const isHeroPage = pathname === "/" || pathname === "/treks" || pathname === "/about" || pathname === "/partner" || /^\/treks\/[^/]+$/.test(pathname);
+  const isHeroPage = pathname === "/" || pathname === "/treks" || pathname === "/about" || pathname === "/partner" || pathname === "/contact" || /^\/treks\/[^/]+$/.test(pathname) || /^\/organizers\/[^/]+$/.test(pathname);
   const [scrolled, setScrolled] = useState(!isHeroPage);
   const [mobileOpen, setMobileOpen] = useState(false);
   const [userMenuOpen, setUserMenuOpen] = useState(false);
