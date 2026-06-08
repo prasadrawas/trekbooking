@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useMemo, useEffect, useCallback, Suspense } from "react"
-import { useSearchParams } from "next/navigation"
+import { useSearchParams, useRouter } from "next/navigation"
 import { motion, AnimatePresence } from "framer-motion"
 import { SlidersHorizontal, Mountain, X } from "lucide-react"
 import { TrekCard } from "@/components/trek/trek-card"
@@ -169,6 +169,7 @@ const itemVariants = {
 // ---------------------------------------------------------------------------
 function TreksPageContent() {
   const searchParams = useSearchParams()
+  const router = useRouter()
   const [isLoading, setIsLoading] = useState(true)
   const [treks, setTreks] = useState(MOCK_TREKS)
   const [isMock, setIsMock] = useState(true)
@@ -331,7 +332,7 @@ function TreksPageContent() {
                 description="Try adjusting your date, difficulty, or region filters to see more results."
                 action={{
                   label: "Clear All Filters",
-                  onClick: () => {},
+                  onClick: () => { router.push("/treks"); },
                 }}
               />
             )}
