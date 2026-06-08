@@ -74,66 +74,20 @@ export default function DashboardLayout({
   }, [router]);
 
   return (
-    <div className="flex h-screen overflow-hidden bg-slate-50">
-      {/* Desktop sidebar */}
-      <div className="hidden lg:flex lg:w-[280px] lg:flex-shrink-0 lg:flex-col">
-        <div className="flex flex-col h-full border-r border-slate-100 bg-white">
-          {/* Logo */}
-          <div className="flex items-center gap-2.5 px-5 h-14 border-b border-slate-100">
-            <div className="flex items-center justify-center w-8 h-8 rounded-lg bg-emerald-600">
-              <Mountain className="w-4.5 h-4.5 text-white" strokeWidth={2} />
-            </div>
-            <span className="text-base font-bold text-slate-900 tracking-tight">
-              TrekBooking
-            </span>
+    <div className="flex h-screen flex-col overflow-hidden bg-slate-50">
+      {/* Shared top bar — one continuous border across full width */}
+      <header className="flex h-14 flex-shrink-0 items-center border-b border-slate-100 bg-white">
+        {/* Logo area — matches sidebar width */}
+        <div className="hidden lg:flex items-center gap-2.5 w-[280px] flex-shrink-0 px-5 border-r border-slate-100 self-stretch">
+          <div className="flex items-center justify-center w-8 h-8 rounded-lg bg-emerald-600">
+            <Mountain className="w-4.5 h-4.5 text-white" strokeWidth={2} />
           </div>
-          <DashboardSidebar user={user} />
+          <span className="text-base font-bold text-slate-900 tracking-tight">
+            TrekBooking
+          </span>
         </div>
-      </div>
-
-      {/* Mobile sidebar overlay */}
-      <AnimatePresence>
-        {sidebarOpen && (
-          <>
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              transition={{ duration: 0.2 }}
-              className="fixed inset-0 z-40 bg-black/40 backdrop-blur-sm lg:hidden"
-              onClick={() => setSidebarOpen(false)}
-            />
-            <motion.div
-              initial={{ x: -280 }}
-              animate={{ x: 0 }}
-              exit={{ x: -280 }}
-              transition={{ type: "spring", stiffness: 400, damping: 40 }}
-              className="fixed left-0 top-0 z-50 h-full w-[280px] bg-white shadow-2xl lg:hidden"
-            >
-              <div className="flex items-center justify-between px-5 h-14 border-b border-slate-100">
-                <div className="flex items-center gap-2.5">
-                  <div className="flex items-center justify-center w-8 h-8 rounded-lg bg-emerald-600">
-                    <Mountain className="w-4.5 h-4.5 text-white" strokeWidth={2} />
-                  </div>
-                  <span className="text-base font-bold text-slate-900">TrekBooking</span>
-                </div>
-                <button
-                  onClick={() => setSidebarOpen(false)}
-                  className="p-1.5 rounded-lg text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition-colors"
-                >
-                  <X className="w-5 h-5" />
-                </button>
-              </div>
-              <DashboardSidebar user={user} />
-            </motion.div>
-          </>
-        )}
-      </AnimatePresence>
-
-      {/* Main content */}
-      <div className="flex flex-1 flex-col overflow-hidden">
-        {/* Top bar */}
-        <header className="flex h-14 flex-shrink-0 items-center gap-4 border-b border-slate-100 bg-white px-4 sm:px-6">
+        {/* Top bar content */}
+        <div className="flex flex-1 items-center gap-4 px-4 sm:px-6">
           {/* Mobile hamburger */}
           <button
             onClick={() => setSidebarOpen(true)}
@@ -224,7 +178,54 @@ export default function DashboardLayout({
               </AnimatePresence>
             </div>
           </div>
-        </header>
+        </div>
+      </header>
+
+      {/* Mobile sidebar overlay */}
+      <AnimatePresence>
+        {sidebarOpen && (
+          <>
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.2 }}
+              className="fixed inset-0 z-40 bg-black/40 backdrop-blur-sm lg:hidden"
+              onClick={() => setSidebarOpen(false)}
+            />
+            <motion.div
+              initial={{ x: -280 }}
+              animate={{ x: 0 }}
+              exit={{ x: -280 }}
+              transition={{ type: "spring", stiffness: 400, damping: 40 }}
+              className="fixed left-0 top-0 z-50 h-full w-[280px] bg-white shadow-2xl lg:hidden"
+            >
+              <div className="flex items-center justify-between px-5 h-14 border-b border-slate-100">
+                <div className="flex items-center gap-2.5">
+                  <div className="flex items-center justify-center w-8 h-8 rounded-lg bg-emerald-600">
+                    <Mountain className="w-4.5 h-4.5 text-white" strokeWidth={2} />
+                  </div>
+                  <span className="text-base font-bold text-slate-900">TrekBooking</span>
+                </div>
+                <button
+                  onClick={() => setSidebarOpen(false)}
+                  className="p-1.5 rounded-lg text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition-colors"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+              <DashboardSidebar user={user} />
+            </motion.div>
+          </>
+        )}
+      </AnimatePresence>
+
+      {/* Below top bar: sidebar + main content */}
+      <div className="flex flex-1 overflow-hidden">
+        {/* Desktop sidebar */}
+        <div className="hidden lg:flex lg:w-[280px] lg:flex-shrink-0 lg:flex-col border-r border-slate-100 bg-white">
+          <DashboardSidebar user={user} />
+        </div>
 
         {/* Page content */}
         <main className="flex-1 overflow-y-auto">
