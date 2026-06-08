@@ -385,6 +385,7 @@ function TrendingTreksSection() {
           </div>
           <Link
             href="/treks"
+            prefetch={false}
             className="inline-flex items-center gap-1.5 text-sm font-semibold text-emerald-600 hover:text-emerald-700 transition-colors group"
           >
             View All Treks
@@ -703,6 +704,7 @@ function PartnerCTASection() {
             <div className="flex flex-wrap gap-3 mt-2">
               <Link
                 href="/partner"
+                prefetch={false}
                 className="inline-flex items-center gap-2 rounded-xl bg-white px-6 py-3 text-sm font-bold text-emerald-700 shadow-lg hover:bg-emerald-50 active:scale-95 transition-all duration-150"
               >
                 Partner With Us
@@ -710,6 +712,7 @@ function PartnerCTASection() {
               </Link>
               <Link
                 href="/partner"
+                prefetch={false}
                 className="inline-flex items-center gap-2 rounded-xl border border-white/30 bg-white/10 px-6 py-3 text-sm font-semibold text-white hover:bg-white/20 active:scale-95 transition-all duration-150"
               >
                 Learn More
@@ -861,6 +864,7 @@ function BottomCTASection() {
         <div className="flex flex-wrap gap-3 justify-center">
           <Link
             href="/treks"
+            prefetch={false}
             className="inline-flex items-center gap-2 rounded-xl bg-emerald-600 px-7 py-3.5 text-sm font-bold text-white shadow-md hover:bg-emerald-700 active:scale-95 transition-all duration-150"
           >
             Explore All Treks
@@ -868,6 +872,7 @@ function BottomCTASection() {
           </Link>
           <Link
             href="/signup"
+            prefetch={false}
             className="inline-flex items-center gap-2 rounded-xl border border-slate-200 px-7 py-3.5 text-sm font-semibold text-slate-700 hover:bg-slate-50 active:scale-95 transition-all duration-150"
           >
             Create Free Account
