@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { motion, AnimatePresence, type Variants } from "framer-motion";
 import {
   Star,
@@ -80,15 +80,18 @@ function EditModal({
   const [comment, setComment] = useState("comment" in review ? (review.comment ?? "") : "");
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
+  const timerRef = useRef<NodeJS.Timeout>(undefined);
+
+  useEffect(() => () => { if (timerRef.current) clearTimeout(timerRef.current); }, []);
 
   const display = hovered || selected;
 
   const handleSave = () => {
     setSaving(true);
-    setTimeout(() => {
+    timerRef.current = setTimeout(() => {
       setSaving(false);
       setSaved(true);
-      setTimeout(onClose, 800);
+      timerRef.current = setTimeout(onClose, 800);
     }, 1200);
   };
 

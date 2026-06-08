@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react"
 import Link from "next/link"
+import Image from "next/image"
 import { useParams, useRouter } from "next/navigation"
 import { motion } from "framer-motion"
 import {
@@ -730,11 +731,12 @@ export default function BookingPage() {
                 {/* Trek image */}
                 {activeEvent.coverImage ? (
                   <div className="h-36 relative overflow-hidden">
-                    {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img
+                      <Image
                       src={activeEvent.coverImage}
                       alt={activeEvent.title}
-                      className="w-full h-full object-cover"
+                      fill
+                      className="object-cover"
+                      sizes="(max-width: 1024px) 100vw, 384px"
                     />
                     <div className="absolute inset-0 bg-black/30" />
                     <div className="absolute bottom-3 left-4 right-4">

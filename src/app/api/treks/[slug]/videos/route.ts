@@ -31,5 +31,7 @@ export async function GET(
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 
-  return NextResponse.json({ videos: videos ?? [] });
+  return NextResponse.json({ videos: videos ?? [] }, {
+    headers: { 'Cache-Control': 'public, s-maxage=120, stale-while-revalidate=600' },
+  });
 }

@@ -2,25 +2,14 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { motion } from "framer-motion";
 import Link from "next/link";
-import { Eye, EyeOff, Backpack, Mountain, Loader2 } from "lucide-react";
+import { Eye, EyeOff, Backpack, Mountain } from "lucide-react";
 import { signInWithGoogle } from "@/actions/auth";
 
 type Role = "trekker" | "organizer";
 
-const container = {
-  hidden: {},
-  show: { transition: { staggerChildren: 0.065 } },
-};
-
-const fadeUp = {
-  hidden: { opacity: 0, y: 16 },
-  show: { opacity: 1, y: 0, transition: { duration: 0.4, ease: [0, 0, 0.58, 1] as [number, number, number, number] } },
-};
-
-function getStrength(password: string): { label: string; color: string; width: string } {
-  if (!password) return { label: "", color: "bg-gray-200", width: "w-0" };
+function getStrength(password: string): { label: string; color: string; pct: string } {
+  if (!password) return { label: "", color: "bg-gray-200", pct: "0%" };
   let score = 0;
   if (password.length >= 8) score++;
   if (password.length >= 12) score++;
@@ -28,9 +17,9 @@ function getStrength(password: string): { label: string; color: string; width: s
   if (/[0-9]/.test(password)) score++;
   if (/[^A-Za-z0-9]/.test(password)) score++;
 
-  if (score <= 2) return { label: "Weak", color: "bg-red-400", width: "w-1/3" };
-  if (score <= 3) return { label: "Medium", color: "bg-amber-400", width: "w-2/3" };
-  return { label: "Strong", color: "bg-green-500", width: "w-full" };
+  if (score <= 2) return { label: "Weak", color: "bg-red-400", pct: "33%" };
+  if (score <= 3) return { label: "Medium", color: "bg-amber-400", pct: "66%" };
+  return { label: "Strong", color: "bg-green-500", pct: "100%" };
 }
 
 export default function SignupPage() {
@@ -100,9 +89,9 @@ export default function SignupPage() {
 
   return (
     <div className="w-full max-w-sm">
-      <motion.div variants={container} initial="hidden" animate="show" className="flex flex-col gap-5">
+      <div className="flex flex-col gap-5">
         {/* Logo */}
-        <motion.div variants={fadeUp} className="flex items-center gap-2.5">
+        <div className="flex items-center gap-2.5 animate-fadeUp">
           <div className="w-9 h-9 rounded-xl bg-green-700 flex items-center justify-center">
             <svg
               viewBox="0 0 24 24"
@@ -117,21 +106,17 @@ export default function SignupPage() {
             </svg>
           </div>
           <span className="text-xl font-bold text-gray-900 tracking-tight">TrekBooking</span>
-        </motion.div>
+        </div>
 
         {/* Heading */}
-        <motion.div variants={fadeUp}>
+        <div className="animate-fadeUp stagger-1">
           <h1 className="text-2xl font-bold text-gray-900">Create your account</h1>
           <p className="text-sm text-gray-500 mt-1">Join the trekking community</p>
-        </motion.div>
+        </div>
 
         {/* Error alert */}
         {error && (
-          <motion.div
-            initial={{ opacity: 0, scale: 0.97 }}
-            animate={{ opacity: 1, scale: 1 }}
-            className="flex items-start gap-3 bg-red-50 border border-red-200 rounded-xl px-4 py-3"
-          >
+          <div className="flex items-start gap-3 bg-red-50 border border-red-200 rounded-xl px-4 py-3 animate-fadeIn">
             <svg className="w-4 h-4 text-red-500 mt-0.5 shrink-0" fill="currentColor" viewBox="0 0 20 20">
               <path
                 fillRule="evenodd"
@@ -140,12 +125,12 @@ export default function SignupPage() {
               />
             </svg>
             <p className="text-sm text-red-700">{error}</p>
-          </motion.div>
+          </div>
         )}
 
         <form onSubmit={handleSubmit} className="flex flex-col gap-4">
           {/* Role selector */}
-          <motion.div variants={fadeUp}>
+          <div className="animate-fadeUp stagger-2">
             <input type="hidden" name="role" value={role} />
             <p className="text-sm font-medium text-gray-700 mb-2">I am a…</p>
             <div className="grid grid-cols-2 gap-3">
@@ -155,13 +140,11 @@ export default function SignupPage() {
                   { value: "organizer", label: "Organizer", Icon: Mountain, desc: "List your treks" },
                 ] as const
               ).map(({ value, label, Icon, desc }) => (
-                <motion.button
+                <button
                   key={value}
                   type="button"
                   onClick={() => setRole(value)}
-                  whileHover={{ scale: 1.03 }}
-                  whileTap={{ scale: 0.97 }}
-                  className={`flex flex-col items-center gap-1.5 rounded-xl border-2 py-4 px-3 transition cursor-pointer ${
+                  className={`flex flex-col items-center gap-1.5 rounded-xl border-2 py-4 px-3 transition-all active:scale-[0.97] hover:scale-[1.03] cursor-pointer ${
                     role === value
                       ? "border-green-600 bg-green-50 text-green-800"
                       : "border-gray-200 bg-white text-gray-600 hover:border-gray-300"
@@ -172,13 +155,13 @@ export default function SignupPage() {
                   />
                   <span className="text-sm font-semibold">{label}</span>
                   <span className="text-xs text-current opacity-70">{desc}</span>
-                </motion.button>
+                </button>
               ))}
             </div>
-          </motion.div>
+          </div>
 
           {/* Full name */}
-          <motion.div variants={fadeUp}>
+          <div className="animate-fadeUp stagger-2">
             <label className="block text-sm font-medium text-gray-700 mb-1.5">Full name</label>
             <input
               type="text"
@@ -189,10 +172,10 @@ export default function SignupPage() {
               className="w-full rounded-xl border border-gray-200 bg-gray-50 px-4 py-2.5 text-sm text-gray-900 placeholder-gray-400 outline-none transition focus:border-green-600 focus:bg-white focus:ring-3 focus:ring-green-600/10"
             />
             {fieldErrors.full_name && <p className="text-xs text-red-500 mt-1">{fieldErrors.full_name}</p>}
-          </motion.div>
+          </div>
 
           {/* Email */}
-          <motion.div variants={fadeUp}>
+          <div className="animate-fadeUp stagger-3">
             <label className="block text-sm font-medium text-gray-700 mb-1.5">Email address</label>
             <input
               type="email"
@@ -203,10 +186,10 @@ export default function SignupPage() {
               className="w-full rounded-xl border border-gray-200 bg-gray-50 px-4 py-2.5 text-sm text-gray-900 placeholder-gray-400 outline-none transition focus:border-green-600 focus:bg-white focus:ring-3 focus:ring-green-600/10"
             />
             {fieldErrors.email && <p className="text-xs text-red-500 mt-1">{fieldErrors.email}</p>}
-          </motion.div>
+          </div>
 
           {/* Phone (optional) */}
-          <motion.div variants={fadeUp}>
+          <div className="animate-fadeUp stagger-3">
             <label className="block text-sm font-medium text-gray-700 mb-1.5">
               Phone{" "}
               <span className="font-normal text-gray-400">(optional)</span>
@@ -225,10 +208,10 @@ export default function SignupPage() {
               />
             </div>
             {fieldErrors.phone && <p className="text-xs text-red-500 mt-1">{fieldErrors.phone}</p>}
-          </motion.div>
+          </div>
 
           {/* Password + strength */}
-          <motion.div variants={fadeUp}>
+          <div className="animate-fadeUp stagger-4">
             <label className="block text-sm font-medium text-gray-700 mb-1.5">Password</label>
             <div className="relative">
               <input
@@ -254,11 +237,9 @@ export default function SignupPage() {
             {password && (
               <div className="mt-2 flex items-center gap-2">
                 <div className="flex-1 h-1.5 bg-gray-200 rounded-full overflow-hidden">
-                  <motion.div
-                    initial={{ width: 0 }}
-                    animate={{ width: strength.width === "w-1/3" ? "33%" : strength.width === "w-2/3" ? "66%" : "100%" }}
-                    transition={{ duration: 0.3 }}
-                    className={`h-full rounded-full ${strength.color}`}
+                  <div
+                    style={{ width: strength.pct }}
+                    className={`h-full rounded-full transition-all duration-300 ${strength.color}`}
                   />
                 </div>
                 <span
@@ -275,10 +256,10 @@ export default function SignupPage() {
               </div>
             )}
             {fieldErrors.password && <p className="text-xs text-red-500 mt-1">{fieldErrors.password}</p>}
-          </motion.div>
+          </div>
 
           {/* Terms */}
-          <motion.div variants={fadeUp}>
+          <div className="animate-fadeUp stagger-4">
             <label className="flex items-start gap-3 cursor-pointer group">
               <div className="relative mt-0.5">
                 <input
@@ -314,10 +295,10 @@ export default function SignupPage() {
               </span>
             </label>
             {fieldErrors.agreed && <p className="text-xs text-red-500 mt-1">{fieldErrors.agreed}</p>}
-          </motion.div>
+          </div>
 
           {/* Submit */}
-          <motion.div variants={fadeUp}>
+          <div className="animate-fadeUp stagger-5">
             <button
               type="submit"
               disabled={isPending || !agreed}
@@ -335,18 +316,18 @@ export default function SignupPage() {
                 "Create Account"
               )}
             </button>
-          </motion.div>
+          </div>
         </form>
 
         {/* Divider */}
-        <motion.div variants={fadeUp} className="flex items-center gap-3">
+        <div className="flex items-center gap-3 animate-fadeUp stagger-5">
           <div className="flex-1 h-px bg-gray-200" />
           <span className="text-xs text-gray-400 font-medium">or continue with</span>
           <div className="flex-1 h-px bg-gray-200" />
-        </motion.div>
+        </div>
 
         {/* Google */}
-        <motion.div variants={fadeUp}>
+        <div className="animate-fadeUp stagger-6">
           <form action={async () => { await signInWithGoogle(role); }}>
             <button
               type="submit"
@@ -361,16 +342,16 @@ export default function SignupPage() {
               Sign up with Google
             </button>
           </form>
-        </motion.div>
+        </div>
 
         {/* Login link */}
-        <motion.p variants={fadeUp} className="text-center text-sm text-gray-500">
+        <p className="text-center text-sm text-gray-500 animate-fadeIn stagger-6">
           Already have an account?{" "}
           <Link href="/login" className="font-semibold text-green-700 hover:text-green-800 transition">
             Sign in
           </Link>
-        </motion.p>
-      </motion.div>
+        </p>
+      </div>
     </div>
   );
 }

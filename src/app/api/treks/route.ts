@@ -122,7 +122,9 @@ export async function GET(request: NextRequest) {
     };
   });
 
-  return NextResponse.json({ treks, total: count ?? 0, page });
+  return NextResponse.json({ treks, total: count ?? 0, page }, {
+    headers: { 'Cache-Control': 'public, s-maxage=60, stale-while-revalidate=300' },
+  });
 }
 
 // POST /api/treks — Create trek (auth: organizer)

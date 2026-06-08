@@ -2,19 +2,9 @@
 
 import { useActionState, useState } from "react";
 import { useSearchParams } from "next/navigation";
-import { motion } from "framer-motion";
 import Link from "next/link";
 import { Eye, EyeOff } from "lucide-react";
 import { signIn, signInWithGoogle } from "@/actions/auth";
-
-const fadeUp = {
-  hidden: { opacity: 0, y: 16 },
-  show: (i: number) => ({
-    opacity: 1,
-    y: 0,
-    transition: { delay: i * 0.07, duration: 0.4, ease: [0, 0, 0.58, 1] as [number, number, number, number] },
-  }),
-};
 
 export default function LoginPage() {
   const searchParams = useSearchParams();
@@ -31,13 +21,7 @@ export default function LoginPage() {
   return (
     <div className="w-full max-w-sm">
       {/* Logo */}
-      <motion.div
-        custom={0}
-        variants={fadeUp}
-        initial="hidden"
-        animate="show"
-        className="flex items-center gap-2.5 mb-8"
-      >
+      <div className="flex items-center gap-2.5 mb-8 animate-fadeUp">
         <div className="w-9 h-9 rounded-xl bg-green-700 flex items-center justify-center">
           <svg
             viewBox="0 0 24 24"
@@ -54,21 +38,17 @@ export default function LoginPage() {
         <span className="text-xl font-bold text-gray-900 tracking-tight">
           TrekBooking
         </span>
-      </motion.div>
+      </div>
 
       {/* Heading */}
-      <motion.div custom={1} variants={fadeUp} initial="hidden" animate="show" className="mb-8">
+      <div className="mb-8 animate-fadeUp stagger-1">
         <h1 className="text-2xl font-bold text-gray-900">Welcome back</h1>
         <p className="text-sm text-gray-500 mt-1">Sign in to your account</p>
-      </motion.div>
+      </div>
 
       {/* Error alert */}
       {errorMessage && (
-        <motion.div
-          initial={{ opacity: 0, scale: 0.97 }}
-          animate={{ opacity: 1, scale: 1 }}
-          className="mb-5 flex items-start gap-3 bg-red-50 border border-red-200 rounded-xl px-4 py-3"
-        >
+        <div className="mb-5 flex items-start gap-3 bg-red-50 border border-red-200 rounded-xl px-4 py-3 animate-fadeIn">
           <svg className="w-4 h-4 text-red-500 mt-0.5 shrink-0" fill="currentColor" viewBox="0 0 20 20">
             <path
               fillRule="evenodd"
@@ -77,14 +57,14 @@ export default function LoginPage() {
             />
           </svg>
           <p className="text-sm text-red-700">{errorMessage}</p>
-        </motion.div>
+        </div>
       )}
 
       {/* Form */}
       <form action={formAction} className="flex flex-col gap-4">
         {redirectTo && <input type="hidden" name="redirect" value={redirectTo} />}
         {/* Email */}
-        <motion.div custom={2} variants={fadeUp} initial="hidden" animate="show">
+        <div className="animate-fadeUp stagger-2">
           <label className="block text-sm font-medium text-gray-700 mb-1.5">
             Email address
           </label>
@@ -96,10 +76,10 @@ export default function LoginPage() {
             placeholder="you@example.com"
             className="w-full rounded-xl border border-gray-200 bg-gray-50 px-4 py-2.5 text-sm text-gray-900 placeholder-gray-400 outline-none transition focus:border-green-600 focus:bg-white focus:ring-3 focus:ring-green-600/10"
           />
-        </motion.div>
+        </div>
 
         {/* Password */}
-        <motion.div custom={3} variants={fadeUp} initial="hidden" animate="show">
+        <div className="animate-fadeUp stagger-3">
           <div className="flex items-center justify-between mb-1.5">
             <label className="block text-sm font-medium text-gray-700">Password</label>
             <Link
@@ -127,10 +107,10 @@ export default function LoginPage() {
               {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
             </button>
           </div>
-        </motion.div>
+        </div>
 
         {/* Submit */}
-        <motion.div custom={4} variants={fadeUp} initial="hidden" animate="show">
+        <div className="animate-fadeUp stagger-4">
           <button
             type="submit"
             disabled={isPending}
@@ -148,24 +128,18 @@ export default function LoginPage() {
               "Sign In"
             )}
           </button>
-        </motion.div>
+        </div>
       </form>
 
       {/* Divider */}
-      <motion.div
-        custom={5}
-        variants={fadeUp}
-        initial="hidden"
-        animate="show"
-        className="flex items-center gap-3 my-5"
-      >
+      <div className="flex items-center gap-3 my-5 animate-fadeUp stagger-5">
         <div className="flex-1 h-px bg-gray-200" />
         <span className="text-xs text-gray-400 font-medium">or continue with</span>
         <div className="flex-1 h-px bg-gray-200" />
-      </motion.div>
+      </div>
 
       {/* Google sign-in */}
-      <motion.div custom={6} variants={fadeUp} initial="hidden" animate="show">
+      <div className="animate-fadeUp stagger-6">
         <form action={async () => { await signInWithGoogle(); }}>
           <button
             type="submit"
@@ -192,21 +166,15 @@ export default function LoginPage() {
             Continue with Google
           </button>
         </form>
-      </motion.div>
+      </div>
 
       {/* Sign up link */}
-      <motion.p
-        custom={7}
-        variants={fadeUp}
-        initial="hidden"
-        animate="show"
-        className="text-center text-sm text-gray-500 mt-6"
-      >
+      <p className="text-center text-sm text-gray-500 mt-6 animate-fadeIn stagger-6">
         Don&apos;t have an account?{" "}
         <Link href="/signup" className="font-semibold text-green-700 hover:text-green-800 transition">
           Sign up
         </Link>
-      </motion.p>
+      </p>
     </div>
   );
 }

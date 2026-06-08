@@ -69,7 +69,9 @@ export async function GET(
         new Date(a.event_date).getTime() - new Date(b.event_date).getTime()
     );
 
-  return NextResponse.json({ trek });
+  return NextResponse.json({ trek }, {
+    headers: { 'Cache-Control': 'public, s-maxage=60, stale-while-revalidate=300' },
+  });
 }
 
 // PUT /api/treks/:slug — Update trek (auth: owner organizer)

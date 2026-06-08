@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { motion } from "framer-motion";
 import {
   CheckCircle2,
@@ -104,6 +104,9 @@ export default function AdminPayoutsPage() {
   const [bulkConfirmOpen, setBulkConfirmOpen] = useState(false);
   const [receiptTarget, setReceiptTarget] = useState<Payout | null>(null);
   const [processing, setProcessing] = useState(false);
+  const timerRef = useRef<NodeJS.Timeout>(undefined);
+
+  useEffect(() => () => { if (timerRef.current) clearTimeout(timerRef.current); }, []);
 
   const pendingPayouts = payouts.filter((p) => p.status === "pending");
   const completedThisMonth = payouts.filter((p) => p.status === "completed");
@@ -127,7 +130,7 @@ export default function AdminPayoutsPage() {
 
   function processAllPending() {
     setProcessing(true);
-    setTimeout(() => {
+    timerRef.current = setTimeout(() => {
       setPayouts((prev) =>
         prev.map((p) =>
           p.status === "pending"

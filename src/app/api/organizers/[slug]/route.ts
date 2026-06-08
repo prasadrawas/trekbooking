@@ -58,6 +58,8 @@ export async function GET(
         ...organizer,
         treks: treks ?? [],
       },
+    }, {
+      headers: { 'Cache-Control': 'public, s-maxage=120, stale-while-revalidate=600' },
     });
   } catch (err) {
     console.error("[GET /api/organizers/:slug] Unhandled error:", err);

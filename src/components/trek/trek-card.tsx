@@ -1,10 +1,22 @@
+import React from "react"
 import Link from "next/link"
 import Image from "next/image"
-import { motion } from "framer-motion"
 import { Clock, RouteIcon, Baby, MapPin, Mountain } from "lucide-react"
 import { RatingStars } from "@/components/shared/rating-stars"
 import { SeatBadge } from "@/components/shared/seat-badge"
 import { DIFFICULTY_LEVELS } from "@/lib/constants"
+
+const priceFormatter = new Intl.NumberFormat("en-IN", {
+  style: "currency",
+  currency: "INR",
+  maximumFractionDigits: 0,
+})
+
+const dateFormatter = new Intl.DateTimeFormat("en-IN", {
+  day: "numeric",
+  month: "short",
+  year: "numeric",
+})
 
 export interface TrekCardProps {
   trek: {
@@ -26,31 +38,19 @@ export interface TrekCardProps {
   }
 }
 
-export function TrekCard({ trek }: TrekCardProps) {
+export const TrekCard = React.memo(function TrekCard({ trek }: TrekCardProps) {
   const difficultyMeta =
     DIFFICULTY_LEVELS.find((d) => d.value === trek.difficulty) ?? DIFFICULTY_LEVELS[0]
 
-  const formattedPrice = new Intl.NumberFormat("en-IN", {
-    style: "currency",
-    currency: "INR",
-    maximumFractionDigits: 0,
-  }).format(trek.price)
+  const formattedPrice = priceFormatter.format(trek.price)
 
   const formattedDate = trek.next_date
-    ? new Intl.DateTimeFormat("en-IN", {
-        day: "numeric",
-        month: "short",
-        year: "numeric",
-      }).format(new Date(trek.next_date))
+    ? dateFormatter.format(new Date(trek.next_date))
     : null
 
   return (
     <Link href={`/treks/${trek.slug}`} className="block group focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 rounded-2xl">
-      <motion.article
-        whileHover={{ y: -4, boxShadow: "0 20px 40px -10px rgba(0,0,0,0.15)" }}
-        transition={{ type: "spring", stiffness: 320, damping: 22 }}
-        className="bg-white rounded-2xl overflow-hidden border border-gray-100 shadow-sm h-full flex flex-col"
-      >
+      <article className="bg-white rounded-2xl overflow-hidden border border-gray-100 shadow-sm h-full flex flex-col transition-all duration-200 hover:-translate-y-1 hover:shadow-xl">
         {/* Image section */}
         <div className="relative aspect-[4/3] overflow-hidden bg-gradient-to-br from-emerald-100 via-emerald-50 to-teal-100">
           {trek.cover_image ? (
@@ -138,7 +138,7 @@ export function TrekCard({ trek }: TrekCardProps) {
             </div>
           </div>
         </div>
-      </motion.article>
+      </article>
     </Link>
   )
-}
+})

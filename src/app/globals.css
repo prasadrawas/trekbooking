@@ -92,3 +92,43 @@ body {
   outline: 2px solid var(--color-ring);
   outline-offset: 2px;
 }
+
+/* Performance animations — replace framer-motion for simple cases */
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(16px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes fadeDown {
+  from { opacity: 0; transform: translateY(-8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes slideInRight {
+  from { transform: translateX(100%); }
+  to { transform: translateX(0); }
+}
+
+@keyframes slideInLeft {
+  from { transform: translateX(-100%); }
+  to { transform: translateX(0); }
+}
+
+.animate-fadeIn { animation: fadeIn 0.4s ease-out forwards; }
+.animate-fadeUp { animation: fadeUp 0.45s ease-out forwards; }
+.animate-fadeDown { animation: fadeDown 0.35s ease-out forwards; }
+.animate-slideInRight { animation: slideInRight 0.3s ease-out forwards; }
+.animate-slideInLeft { animation: slideInLeft 0.3s ease-out forwards; }
+
+/* Stagger delays for children */
+.stagger-1 { animation-delay: 0.05s; opacity: 0; }
+.stagger-2 { animation-delay: 0.1s; opacity: 0; }
+.stagger-3 { animation-delay: 0.15s; opacity: 0; }
+.stagger-4 { animation-delay: 0.2s; opacity: 0; }
+.stagger-5 { animation-delay: 0.25s; opacity: 0; }
+.stagger-6 { animation-delay: 0.3s; opacity: 0; }

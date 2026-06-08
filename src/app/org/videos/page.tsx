@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { motion, AnimatePresence, type Variants } from "framer-motion";
 import {
   Tv2 as Youtube,
@@ -73,6 +73,9 @@ function VideoFormModal({ initial, treks, onSave, onClose }: VideoFormProps) {
   const [trekId, setTrekId] = useState(initial?.linkedTrekId ?? "");
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
+  const timerRef = useRef<NodeJS.Timeout>(undefined);
+
+  useEffect(() => () => { if (timerRef.current) clearTimeout(timerRef.current); }, []);
 
   const ytId = extractYouTubeId(url);
   const linkedTrek = treks.find((t) => t.id === trekId) ?? null;
@@ -80,10 +83,10 @@ function VideoFormModal({ initial, treks, onSave, onClose }: VideoFormProps) {
   const handleSave = () => {
     if (!ytId || !title.trim()) return;
     setSaving(true);
-    setTimeout(() => {
+    timerRef.current = setTimeout(() => {
       setSaving(false);
       setSaved(true);
-      setTimeout(() => {
+      timerRef.current = setTimeout(() => {
         onSave({
           youtubeUrl: url,
           youtubeId: ytId,
@@ -232,6 +235,9 @@ export default function VideosPage() {
   const [channelSaved, setChannelSaved] = useState(false);
   const [deleteId, setDeleteId] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
+  const channelTimerRef = useRef<NodeJS.Timeout>(undefined);
+
+  useEffect(() => () => { if (channelTimerRef.current) clearTimeout(channelTimerRef.current); }, []);
 
   // ── Fetch initial data ──────────────────────────────────────────────────────
   useEffect(() => {
@@ -354,7 +360,7 @@ export default function VideosPage() {
     } catch {
       // silent
     }
-    setTimeout(() => setChannelSaved(false), 2000);
+    channelTimerRef.current = setTimeout(() => setChannelSaved(false), 2000);
   };
 
   const containerVars: Variants = {

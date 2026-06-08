@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react"
 import Link from "next/link"
+import Image from "next/image"
 import { useParams } from "next/navigation"
 import { motion, AnimatePresence } from "framer-motion"
 import {
@@ -27,6 +28,7 @@ import { TrekCard } from "@/components/trek/trek-card"
 import { RatingStars } from "@/components/shared/rating-stars"
 import { SeatBadge } from "@/components/shared/seat-badge"
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs"
+import { mapApiTrek } from "@/lib/trek-mapper"
 
 // ---------------------------------------------------------------------------
 // Mock trek data — Rajgad Fort Trek (used as fallback when API is unavailable)
@@ -324,164 +326,128 @@ export default function TrekDetailPage() {
   useEffect(() => {
     if (!slug) return
     setLoading(true)
-    fetch(`/api/treks/${slug}`)
-      .then((res) => {
-        if (!res.ok) throw new Error(`HTTP ${res.status}`)
-        return res.json()
-      })
-      .then((data) => {
-        const t = data.trek
-        const pickupSource =
-          t.default_pickup_points?.length
-            ? t.default_pickup_points
-            : t.trek_events?.[0]?.pickup_points ?? []
+    Promise.all([
+      fetch(`/api/treks/${slug}`).then((r) => r.ok ? r.json() : null),
+      fetch(`/api/treks/${slug}/reviews`).then((r) => r.ok ? r.json() : null),
+      fetch(`/api/treks?limit=3`).then((r) => r.ok ? r.json() : null),
+    ]).then(([data, reviewData, similarData]) => {
+      if (!data?.trek) throw new Error("Trek not found")
+      const t = data.trek
+      const pickupSource =
+        t.default_pickup_points?.length
+          ? t.default_pickup_points
+          : t.trek_events?.[0]?.pickup_points ?? []
 
-        const mapped: typeof MOCK_TREK = {
-          title: t.title,
-          slug: t.slug,
-          difficulty: t.difficulty,
-          duration: t.duration_days,
-          distance: t.distance_km,
-          elevation: t.elevation_m,
-          region: t.region ?? MOCK_TREK.region,
-          is_child_friendly: t.is_child_friendly ?? false,
+      const mapped: typeof MOCK_TREK = {
+        title: t.title,
+        slug: t.slug,
+        difficulty: t.difficulty,
+        duration: t.duration_days,
+        distance: t.distance_km,
+        elevation: t.elevation_m,
+        region: t.region ?? MOCK_TREK.region,
+        is_child_friendly: t.is_child_friendly ?? false,
+        rating: t.organizers?.avg_rating ?? 0,
+        total_reviews: 0,
+        organizer: {
+          slug: t.organizers?.slug ?? MOCK_TREK.organizer.slug,
+          name: t.organizers?.org_name ?? MOCK_TREK.organizer.name,
+          verified: t.organizers?.is_verified ?? false,
           rating: t.organizers?.avg_rating ?? 0,
-          total_reviews: 0,
-          organizer: {
-            slug: t.organizers?.slug ?? MOCK_TREK.organizer.slug,
-            name: t.organizers?.org_name ?? MOCK_TREK.organizer.name,
-            verified: t.organizers?.is_verified ?? false,
-            rating: t.organizers?.avg_rating ?? 0,
-            total_treks: 0,
-            since: t.organizers?.created_at
-              ? new Date(t.organizers.created_at).getFullYear().toString()
-              : MOCK_TREK.organizer.since,
-          },
-          description: t.description ?? MOCK_TREK.description,
-          inclusions: t.inclusions?.length ? t.inclusions : MOCK_TREK.inclusions,
-          exclusions: t.exclusions?.length ? t.exclusions : MOCK_TREK.exclusions,
-          itinerary: Array.isArray(t.itinerary) ? t.itinerary : [],
-          thingsToCarry: t.things_to_carry?.length
-            ? t.things_to_carry
-            : MOCK_TREK.thingsToCarry,
-          pickupPoints: pickupSource.map(
-            (p: { label: string; pickup_time: string; extra_charge?: number; maps_url?: string }, i: number) => ({
-              id: String(i),
-              name: p.label,
-              time: p.pickup_time,
-              extraCharge: p.extra_charge ?? 0,
-              mapUrl: p.maps_url ?? "#",
-            })
-          ),
-          upcomingDates: (t.trek_events ?? [])
-            .filter((e: { status: string }) => e.status === "upcoming" || e.status === "full")
-            .map((e: {
-              id: string
-              event_date: string
-              reporting_time: string
-              price: number
-              child_price: number
-              total_seats: number
-              booked_seats: number
-            }) => {
-              const d = new Date(e.event_date)
-              return {
-                eventId: e.id,
-                date: d.toLocaleDateString("en-IN", {
-                  day: "numeric",
-                  month: "short",
-                  year: "numeric",
-                }),
-                day: d.toLocaleDateString("en-IN", { weekday: "short" }),
-                reportingTime: e.reporting_time,
-                adultPrice: e.price ?? 0,
-                childPrice: e.child_price ?? null,
-                availableSeats: e.total_seats - e.booked_seats,
-                totalSeats: e.total_seats,
-              }
-            }),
-          reviews: [],
-          ratingBreakdown: { 5: 0, 4: 0, 3: 0, 2: 0, 1: 0 },
-          images: (t.trek_images ?? []).map((img: { id: string; image_url: string; is_cover: boolean }) => ({
-            id: img.id,
-            url: img.image_url,
-            isCover: img.is_cover,
-          })),
-        }
-
-        // Fall back to mock upcoming dates if API returned none
-        if (mapped.upcomingDates.length === 0) {
-          mapped.upcomingDates = MOCK_TREK.upcomingDates
-        }
-
-        setTrek(mapped)
-        setIsMock(false)
-
-        // Fetch real reviews
-        fetch(`/api/treks/${slug}/reviews`)
-          .then((r) => r.ok ? r.json() : null)
-          .then((reviewData) => {
-            if (!reviewData?.reviews) return
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            const realReviews = reviewData.reviews.map((rv: any) => ({
-              id: String(rv.id ?? ""),
-              name: rv.reviewer_name ?? rv.profiles?.full_name ?? "Trekker",
-              rating: Number(rv.rating ?? 5),
-              date: rv.created_at
-                ? new Date(rv.created_at).toLocaleDateString("en-IN", { month: "short", year: "numeric" })
-                : "—",
-              text: rv.comment ?? rv.body ?? "",
-              avatar: rv.avatar_url ?? null,
-            }))
-            if (realReviews.length > 0) {
-              setTrek((prev) => ({ ...prev, reviews: realReviews }))
+          total_treks: 0,
+          since: t.organizers?.created_at
+            ? new Date(t.organizers.created_at).getFullYear().toString()
+            : MOCK_TREK.organizer.since,
+        },
+        description: t.description ?? MOCK_TREK.description,
+        inclusions: t.inclusions?.length ? t.inclusions : MOCK_TREK.inclusions,
+        exclusions: t.exclusions?.length ? t.exclusions : MOCK_TREK.exclusions,
+        itinerary: Array.isArray(t.itinerary) ? t.itinerary : [],
+        thingsToCarry: t.things_to_carry?.length
+          ? t.things_to_carry
+          : MOCK_TREK.thingsToCarry,
+        pickupPoints: pickupSource.map(
+          (p: { label: string; pickup_time: string; extra_charge?: number; maps_url?: string }, i: number) => ({
+            id: String(i),
+            name: p.label,
+            time: p.pickup_time,
+            extraCharge: p.extra_charge ?? 0,
+            mapUrl: p.maps_url ?? "#",
+          })
+        ),
+        upcomingDates: (t.trek_events ?? [])
+          .filter((e: { status: string }) => e.status === "upcoming" || e.status === "full")
+          .map((e: {
+            id: string
+            event_date: string
+            reporting_time: string
+            price: number
+            child_price: number
+            total_seats: number
+            booked_seats: number
+          }) => {
+            const d = new Date(e.event_date)
+            return {
+              eventId: e.id,
+              date: d.toLocaleDateString("en-IN", {
+                day: "numeric",
+                month: "short",
+                year: "numeric",
+              }),
+              day: d.toLocaleDateString("en-IN", { weekday: "short" }),
+              reportingTime: e.reporting_time,
+              adultPrice: e.price ?? 0,
+              childPrice: e.child_price ?? null,
+              availableSeats: e.total_seats - e.booked_seats,
+              totalSeats: e.total_seats,
             }
-          })
-          .catch(() => { /* reviews stay empty */ })
+          }),
+        reviews: [],
+        ratingBreakdown: { 5: 0, 4: 0, 3: 0, 2: 0, 1: 0 },
+        images: (t.trek_images ?? []).map((img: { id: string; image_url: string; is_cover: boolean }) => ({
+          id: img.id,
+          url: img.image_url,
+          isCover: img.is_cover,
+        })),
+      }
 
-        // Fetch similar treks (exclude current trek)
-        fetch(`/api/treks?limit=3`)
-          .then((r) => r.ok ? r.json() : null)
-          .then((trekData) => {
-            if (!trekData?.treks) return
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            const others = trekData.treks
-              .filter((st: any) => st.slug !== slug)
-              .slice(0, 3)
-              // eslint-disable-next-line @typescript-eslint/no-explicit-any
-              .map((st: any) => {
-                let org = st.organizer ?? st.organizers ?? null
-                if (Array.isArray(org)) org = org[0]
-                let coverImg = null
-                if (st.cover_image) coverImg = typeof st.cover_image === "string" ? st.cover_image : st.cover_image.image_url ?? null
-                return {
-                  title: String(st.title ?? ""),
-                  slug: String(st.slug ?? ""),
-                  cover_image: coverImg,
-                  difficulty: String(st.difficulty ?? "moderate"),
-                  duration: Number(st.duration_days ?? 1),
-                  distance: Number(st.distance_km ?? 0),
-                  price: Number(st.next_event?.price ?? st.default_adult_price ?? 0),
-                  rating: Number(org?.avg_rating ?? 0),
-                  total_reviews: Number(st.total_reviews ?? 0),
-                  available_seats: st.next_event ? Number(st.next_event.seats_available ?? 0) : 99,
-                  total_seats: st.next_event ? Number(st.next_event.seats_available ?? 0) : 99,
-                  next_date: st.next_event?.event_date ?? null,
-                  is_child_friendly: Boolean(st.is_child_friendly),
-                  organizer_name: String(org?.org_name ?? ""),
-                  region: String(st.region ?? ""),
-                }
-              })
-            if (others.length > 0) setSimilarTreks(others)
-          })
-          .catch(() => { /* keep mock similar treks */ })
-      })
-      .catch(() => {
-        // Keep MOCK_TREK as fallback
-        setTrek(MOCK_TREK)
-        setIsMock(true)
-      })
-      .finally(() => setLoading(false))
+      // Fall back to mock upcoming dates if API returned none
+      if (mapped.upcomingDates.length === 0) {
+        mapped.upcomingDates = MOCK_TREK.upcomingDates
+      }
+
+      // Process reviews
+      if (reviewData?.reviews?.length > 0) {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        mapped.reviews = reviewData.reviews.map((rv: any) => ({
+          id: String(rv.id ?? ""),
+          name: rv.reviewer_name ?? rv.profiles?.full_name ?? "Trekker",
+          rating: Number(rv.rating ?? 5),
+          date: rv.created_at
+            ? new Date(rv.created_at).toLocaleDateString("en-IN", { month: "short", year: "numeric" })
+            : "—",
+          text: rv.comment ?? rv.body ?? "",
+          avatar: rv.avatar_url ?? null,
+        }))
+      }
+
+      setTrek(mapped)
+      setIsMock(false)
+
+      // Process similar treks
+      if (similarData?.treks) {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const others = similarData.treks
+          .filter((st: any) => st.slug !== slug)
+          .slice(0, 3)
+          .map(mapApiTrek)
+        if (others.length > 0) setSimilarTreks(others)
+      }
+    }).catch(() => {
+      // Keep MOCK_TREK as fallback
+      setTrek(MOCK_TREK)
+      setIsMock(true)
+    }).finally(() => setLoading(false))
   }, [slug])
 
   if (loading) {
@@ -514,7 +480,14 @@ export default function TrekDetailPage() {
             className={`col-span-2 ${trek.images.length > 0 ? "relative" : `bg-gradient-to-br ${GALLERY_GRADIENTS[0]}`} flex items-center justify-center`}
           >
             {trek.images.length > 0 ? (
-              <img src={trek.images.find((i) => i.isCover)?.url ?? trek.images[0]?.url} alt={trek.title} className="absolute inset-0 w-full h-full object-cover" />
+              <Image
+                src={trek.images.find((i) => i.isCover)?.url ?? trek.images[0]?.url ?? ""}
+                alt={trek.title}
+                fill
+                className="object-cover"
+                priority
+                sizes="(max-width: 768px) 100vw, 66vw"
+              />
             ) : (
               <span className="text-white/30 text-7xl font-black select-none">⛰️</span>
             )}
@@ -527,7 +500,7 @@ export default function TrekDetailPage() {
               className={`flex-1 ${trek.images.length > 1 ? "relative" : `bg-gradient-to-br ${GALLERY_GRADIENTS[1]}`} flex items-center justify-center`}
             >
               {trek.images.length > 1 ? (
-                <img src={trek.images[1].url} alt="" className="absolute inset-0 w-full h-full object-cover" />
+                <Image src={trek.images[1].url} alt="" fill className="object-cover" sizes="33vw" />
               ) : (
                 <Camera className="w-8 h-8 text-white/30" />
               )}
@@ -536,7 +509,7 @@ export default function TrekDetailPage() {
               className={`flex-1 ${trek.images.length > 2 ? "relative" : `bg-gradient-to-br ${GALLERY_GRADIENTS[2]}`} flex items-center justify-center relative`}
             >
               {trek.images.length > 2 ? (
-                <img src={trek.images[2].url} alt="" className="absolute inset-0 w-full h-full object-cover" />
+                <Image src={trek.images[2].url} alt="" fill className="object-cover" sizes="33vw" />
               ) : (
                 <Camera className="w-8 h-8 text-white/30" />
               )}
@@ -1210,7 +1183,14 @@ export default function TrekDetailPage() {
                       transition={{ delay: i * 0.05 }}
                       className="relative aspect-[4/3] rounded-xl overflow-hidden group"
                     >
-                      <img src={img.url} alt={`${trek.title} photo ${i + 1}`} className="w-full h-full object-cover" />
+                      <Image
+                        src={img.url}
+                        alt={`${trek.title} photo ${i + 1}`}
+                        fill
+                        className="object-cover"
+                        loading="lazy"
+                        sizes="(max-width: 640px) 100vw, 33vw"
+                      />
                       {img.isCover && (
                         <span className="absolute top-2 left-2 bg-emerald-500 text-white text-xs font-bold px-2 py-0.5 rounded-full">
                           Cover

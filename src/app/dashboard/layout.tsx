@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { usePathname, useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import { Menu, X, Mountain, Bell, ChevronRight, LogOut } from "lucide-react";
@@ -176,7 +177,7 @@ export default function DashboardLayout({
                 className="flex items-center gap-2 rounded-lg px-2 py-1.5 hover:bg-slate-100 transition-colors"
               >
                 {user.avatarUrl ? (
-                  <img src={user.avatarUrl} alt={user.name} className="h-7 w-7 rounded-full object-cover" />
+                  <Image src={user.avatarUrl} alt={user.name} width={28} height={28} className="rounded-full object-cover" />
                 ) : (
                   <div className="flex h-7 w-7 items-center justify-center rounded-full bg-emerald-100 text-xs font-semibold text-emerald-700">
                     {user.initials}

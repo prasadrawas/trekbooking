@@ -48,5 +48,7 @@ export async function GET(
     reviews: list,
     avgRating: avgRating !== null ? Math.round(avgRating * 10) / 10 : null,
     totalReviews,
+  }, {
+    headers: { 'Cache-Control': 'public, s-maxage=60, stale-while-revalidate=300' },
   });
 }

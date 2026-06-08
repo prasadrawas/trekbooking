@@ -5,6 +5,7 @@ import { useSearchParams } from "next/navigation"
 import { motion, AnimatePresence } from "framer-motion"
 import { SlidersHorizontal, Mountain, X } from "lucide-react"
 import { TrekCard } from "@/components/trek/trek-card"
+import { mapApiTrek } from "@/lib/trek-mapper"
 import { TrekFilters } from "@/components/trek/trek-filters"
 import { SearchBar } from "@/components/shared/search-bar"
 import { Pagination } from "@/components/shared/pagination"
@@ -208,33 +209,8 @@ function TreksPageContent() {
     return `/api/treks?${params.toString()}`
   }, [searchParams])
 
-  // Map API response to card format
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const mapTrek = useCallback((t: any) => {
-    let org = t.organizer ?? t.organizers ?? null
-    if (Array.isArray(org)) org = org[0]
-    let coverImg = null
-    if (t.cover_image) {
-      coverImg = typeof t.cover_image === "string" ? t.cover_image : t.cover_image.image_url ?? null
-    }
-    return {
-      title: String(t.title ?? ""),
-      slug: String(t.slug ?? ""),
-      cover_image: coverImg,
-      difficulty: String(t.difficulty ?? "moderate"),
-      duration: Number(t.duration_days ?? 1),
-      distance: Number(t.distance_km ?? 0),
-      price: Number(t.next_event?.price ?? t.default_adult_price ?? 0),
-      rating: Number(org?.avg_rating ?? 0),
-      total_reviews: Number(t.total_reviews ?? 0),
-      available_seats: t.next_event ? Number(t.next_event.seats_available ?? 0) : 99,
-      total_seats: t.next_event ? Number(t.next_event.seats_available ?? 0) : 99,
-      next_date: t.next_event?.event_date ?? null,
-      is_child_friendly: Boolean(t.is_child_friendly),
-      organizer_name: String(org?.org_name ?? ""),
-      region: String(t.region ?? ""),
-    }
-  }, [])
+  // Map API response to card format — delegates to shared mapApiTrek
+  const mapTrek = useCallback(mapApiTrek, [])
 
   // Fetch treks when URL params change
   useEffect(() => {
