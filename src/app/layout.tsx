@@ -70,15 +70,13 @@ export const metadata: Metadata = {
       "400+ verified trek routes in the Sahyadris. Book online, pay securely, just show up.",
     images: ["/og-image.jpg"],
   },
+  // TODO: Change to index: true, follow: true when site is ready for launch
   robots: {
-    index: true,
-    follow: true,
+    index: false,
+    follow: false,
     googleBot: {
-      index: true,
-      follow: true,
-      "max-video-preview": -1,
-      "max-image-preview": "large",
-      "max-snippet": -1,
+      index: false,
+      follow: false,
     },
   },
   alternates: {
