@@ -1,149 +1,50 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
-import { type NextRequest, NextResponse } from "next/server";
-import { createClient } from "@/lib/supabase/server";
+import { requireAuth } from "@/lib/auth";
+import { withErrorHandling, jsonOk, jsonError } from "@/lib/api-utils";
+import { ReviewRepository } from "@/lib/repositories";
 
-// ─── GET /api/reviews — List reviews for current user (auth: trekker) ─────────
+// GET /api/reviews — List reviews for current user (auth: trekker)
+export const GET = withErrorHandling(async () => {
+  const { supabase, user } = await requireAuth();
+  const repo = new ReviewRepository(supabase);
+  const reviews = await repo.findByTrekkerId(user.id);
+  return jsonOk({ reviews });
+});
 
-export async function GET(): Promise<NextResponse> {
-  try {
-    const supabase = await createClient();
+// POST /api/reviews — Create review (auth: trekker)
+export const POST = withErrorHandling(async (request) => {
+  const { supabase, user } = await requireAuth();
+  const repo = new ReviewRepository(supabase);
 
-    const { data: { user }, error: authError } = await supabase.auth.getUser();
-    if (authError || !user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
+  const body = await request.json();
+  const { booking_id, rating, comment } = body;
 
-    const { data: reviews, error } = await (supabase as any)
-      .from("reviews")
-      .select(`
-        id,
-        rating,
-        comment,
-        created_at,
-        booking_id,
-        trek_id,
-        bookings (
-          id,
-          trek_events (
-            id,
-            event_date,
-            treks (
-              id,
-              title,
-              slug
-            )
-          )
-        )
-      `)
-      .eq("trekker_id", user.id)
-      .order("created_at", { ascending: false })
-      .limit(50);
-
-    if (error) {
-      console.error("[GET /api/reviews] DB error:", error.message);
-      return NextResponse.json({ error: "Failed to fetch reviews" }, { status: 500 });
-    }
-
-    return NextResponse.json({ reviews: reviews ?? [] });
-  } catch (err) {
-    console.error("[GET /api/reviews] Unhandled error:", err);
-    return NextResponse.json({ error: "Internal server error" }, { status: 500 });
+  if (!booking_id || rating === undefined) {
+    return jsonError("booking_id and rating are required", 400);
   }
-}
-
-// ─── POST /api/reviews — Create review (auth: trekker) ───────────────────────
-
-export async function POST(request: NextRequest): Promise<NextResponse> {
-  try {
-    const supabase = await createClient();
-
-    const { data: { user }, error: authError } = await supabase.auth.getUser();
-    if (authError || !user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
-
-    const body = await request.json();
-    const { booking_id, rating, comment } = body as {
-      booking_id: string;
-      rating: number;
-      comment?: string;
-    };
-
-    if (!booking_id || rating === undefined) {
-      return NextResponse.json({ error: "booking_id and rating are required" }, { status: 400 });
-    }
-
-    if (!Number.isInteger(rating) || rating < 1 || rating > 5) {
-      return NextResponse.json({ error: "rating must be an integer between 1 and 5" }, { status: 400 });
-    }
-
-    // Validate booking belongs to user and is completed
-    const { data: bookingRaw, error: bookingError } = await (supabase as any)
-      .from("bookings")
-      .select("id, trekker_id, status, trek_events(trek_id)")
-      .eq("id", booking_id)
-      .single();
-
-    if (bookingError || !bookingRaw) {
-      return NextResponse.json({ error: "Booking not found" }, { status: 404 });
-    }
-
-    const booking = bookingRaw as {
-      id: string;
-      trekker_id: string;
-      status: string;
-      trek_events: { trek_id: string } | null;
-    };
-
-    if (booking.trekker_id !== user.id) {
-      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
-    }
-
-    if (booking.status !== "completed") {
-      return NextResponse.json(
-        { error: "Reviews can only be submitted for completed bookings" },
-        { status: 422 }
-      );
-    }
-
-    // Check no existing review for this booking
-    const { data: existingReview } = await (supabase as any)
-      .from("reviews")
-      .select("id")
-      .eq("booking_id", booking_id)
-      .single();
-
-    if (existingReview) {
-      return NextResponse.json(
-        { error: "A review already exists for this booking" },
-        { status: 409 }
-      );
-    }
-
-    const trekId = booking.trek_events?.trek_id ?? null;
-
-    const { data: review, error: insertError } = await (supabase as any)
-      .from("reviews")
-      .insert({
-        trekker_id: user.id,
-        booking_id,
-        trek_id: trekId,
-        rating,
-        comment: comment ?? null,
-      })
-      .select("*")
-      .single();
-
-    if (insertError) {
-      console.error("[POST /api/reviews] Insert error:", insertError.message);
-      return NextResponse.json({ error: "Failed to create review" }, { status: 500 });
-    }
-
-    // Note: organizer avg_rating and total_reviews are updated by DB trigger (update_organizer_rating)
-
-    return NextResponse.json({ review }, { status: 201 });
-  } catch (err) {
-    console.error("[POST /api/reviews] Unhandled error:", err);
-    return NextResponse.json({ error: "Internal server error" }, { status: 500 });
+  if (!Number.isInteger(rating) || rating < 1 || rating > 5) {
+    return jsonError("rating must be an integer between 1 and 5", 400);
   }
-}
+
+  // Validate booking belongs to user and is completed
+  const booking = await repo.findBookingForReview(booking_id);
+  if (!booking) return jsonError("Booking not found", 404);
+  if (booking.trekker_id !== user.id) return jsonError("Forbidden", 403);
+  if (booking.status !== "completed") {
+    return jsonError("Reviews can only be submitted for completed bookings", 422);
+  }
+
+  // Check no existing review for this booking
+  const existing = await repo.findByBookingId(booking_id);
+  if (existing) return jsonError("A review already exists for this booking", 409);
+
+  const trekId = booking.trek_events?.trek_id ?? null;
+  const review = await repo.create({
+    trekker_id: user.id,
+    booking_id,
+    trek_id: trekId,
+    rating,
+    comment: comment ?? null,
+  });
+
+  return jsonOk({ review }, 201);
+});

@@ -1,0 +1,11 @@
+export { BookingRepository } from "./booking.repository";
+export { TrekRepository } from "./trek.repository";
+export { TrekEventRepository } from "./trek-event.repository";
+export { PaymentRepository } from "./payment.repository";
+export { TrekImageRepository } from "./trek-image.repository";
+export { OrganizerRepository } from "./organizer.repository";
+export { ReviewRepository } from "./review.repository";
+export { ProfileRepository } from "./profile.repository";
+export { PickupPointRepository } from "./pickup-point.repository";
+export { PayoutRepository } from "./payout.repository";
+export { VideoRepository } from "./video.repository";

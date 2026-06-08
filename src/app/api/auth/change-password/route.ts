@@ -1,29 +1,23 @@
-import { NextRequest, NextResponse } from "next/server";
-import { createClient } from "@/lib/supabase/server";
+import { NextRequest } from "next/server";
+import { requireAuth } from "@/lib/auth";
+import { withErrorHandling, jsonOk, jsonError } from "@/lib/api-utils";
 
-export async function POST(request: NextRequest) {
-  const supabase = await createClient();
+export const POST = withErrorHandling(async (request: NextRequest) => {
+  const { supabase, user } = await requireAuth();
 
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user || !user.email) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  if (!user.email) {
+    return jsonError("User email not available", 400);
   }
 
   const body = await request.json();
   const { current_password, new_password } = body;
 
   if (!current_password || !new_password) {
-    return NextResponse.json(
-      { error: "Current password and new password are required." },
-      { status: 400 }
-    );
+    return jsonError("Current password and new password are required.", 400);
   }
 
   if (new_password.length < 8) {
-    return NextResponse.json(
-      { error: "New password must be at least 8 characters." },
-      { status: 400 }
-    );
+    return jsonError("New password must be at least 8 characters.", 400);
   }
 
   // Verify current password
@@ -33,10 +27,7 @@ export async function POST(request: NextRequest) {
   });
 
   if (verifyError) {
-    return NextResponse.json(
-      { error: "Current password is incorrect." },
-      { status: 400 }
-    );
+    return jsonError("Current password is incorrect.", 400);
   }
 
   // Update password
@@ -45,8 +36,8 @@ export async function POST(request: NextRequest) {
   });
 
   if (updateError) {
-    return NextResponse.json({ error: updateError.message }, { status: 500 });
+    return jsonError(updateError.message, 500);
   }
 
-  return NextResponse.json({ success: true });
-}
+  return jsonOk({ success: true });
+});

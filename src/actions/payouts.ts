@@ -1,36 +1,11 @@
 "use server";
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { createClient } from "@/lib/supabase/server";
+import { requireAuth, assertAdmin } from "@/lib/auth";
+import { requireOrganizer } from "@/lib/auth";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { COMMISSION_RATE } from "@/lib/constants";
-import type { Payout } from "@/types/database";
-
-// ─── Helpers ──────────────────────────────────────────────────────────────────
-
-async function getAuthenticatedUser() {
-  const supabase = await createClient();
-  const {
-    data: { user },
-    error,
-  } = await supabase.auth.getUser();
-  if (error || !user) throw new Error("Not authenticated");
-  return { supabase, user };
-}
-
-/**
- * Verifies the current user is a platform admin.
- * Admins are identified by their email matching ADMIN_EMAIL env var,
- * or by a role stored in user metadata.
- */
-function assertAdmin(user: { id: string; email?: string; user_metadata?: Record<string, unknown> }): void {
-  const adminEmail = process.env.ADMIN_EMAIL;
-  const isAdminByEmail = adminEmail && user.email === adminEmail;
-  const isAdminByMeta = user.user_metadata?.role === "admin";
-  if (!isAdminByEmail && !isAdminByMeta) {
-    throw new Error("Admin access required.");
-  }
-}
+import { PayoutRepository, OrganizerRepository } from "@/lib/repositories";
 
 // ─── getPendingPayouts ────────────────────────────────────────────────────────
 
@@ -55,29 +30,19 @@ export async function getPendingPayouts(): Promise<{
   error?: string;
 }> {
   try {
-    const { user } = await getAuthenticatedUser();
+    const { user } = await requireAuth();
     assertAdmin(user);
 
     const supabase = createAdminClient();
+    const payoutRepo = new PayoutRepository(supabase);
 
-    const { data, error } = await (supabase as any)
-      .from("payouts")
-      .select(
-        `
-        *,
-        organizers(org_name),
-        trek_events(
-          event_date,
-          treks(title)
-        )
-        `,
-      )
-      .eq("status", "pending")
-      .order("created_at", { ascending: true });
+    const { payouts } = await payoutRepo.findPaginated({
+      status: "pending",
+      page: 1,
+      limit: 100,
+    });
 
-    if (error) return { data: [], error: error.message };
-
-    const result: PendingPayoutItem[] = ((data as any[]) ?? []).map((p: any) => {
+    const result: PendingPayoutItem[] = (payouts as any[]).map((p: any) => {
       const organizer = Array.isArray(p.organizers) ? p.organizers[0] : p.organizers;
       const events = Array.isArray(p.trek_events) ? p.trek_events[0] : p.trek_events;
       const trek = events
@@ -86,8 +51,8 @@ export async function getPendingPayouts(): Promise<{
 
       return {
         id: p.id,
-        organizer_id: p.organizer_id,
-        trek_event_id: p.trek_event_id,
+        organizer_id: p.organizer_id ?? organizer?.id ?? "",
+        trek_event_id: p.trek_event_id ?? events?.id ?? "",
         total_collected: p.total_collected,
         commission: p.commission,
         payout_amount: p.payout_amount,
@@ -116,19 +81,20 @@ export async function processPayout(
   payoutId: string,
 ): Promise<{ success: true } | { error: string }> {
   try {
-    const { user } = await getAuthenticatedUser();
+    const { user } = await requireAuth();
     assertAdmin(user);
 
     const supabase = createAdminClient();
+    const payoutRepo = new PayoutRepository(supabase);
 
     // Fetch payout record
-    const { data: payoutRaw, error: fetchError } = await (supabase as any)
+    const { data: payoutRaw } = await (supabase as any)
       .from("payouts")
       .select("id, status, organizer_id, payout_amount, organizers(razorpay_fund_account_id)")
       .eq("id", payoutId)
       .single();
 
-    if (fetchError || !payoutRaw) return { error: "Payout not found." };
+    if (!payoutRaw) return { error: "Payout not found." };
     const payout = payoutRaw as {
       id: string;
       status: string;
@@ -146,10 +112,7 @@ export async function processPayout(
     const fundAccountId = organizerData?.razorpay_fund_account_id;
 
     // Mark as processing
-    await (supabase as any)
-      .from("payouts")
-      .update({ status: "processing" })
-      .eq("id", payoutId);
+    await payoutRepo.updateStatus(payoutId, { status: "processing" });
 
     if (fundAccountId) {
       try {
@@ -179,39 +142,27 @@ export async function processPayout(
 
         if (!response.ok) {
           const errBody = await response.json().catch(() => ({})) as { description?: string };
-          await (supabase as any)
-            .from("payouts")
-            .update({ status: "failed" })
-            .eq("id", payoutId);
+          await payoutRepo.updateStatus(payoutId, { status: "failed" });
           return { error: errBody?.description ?? "Razorpay payout failed." };
         }
 
         const rpPayout = await response.json() as { id: string };
 
-        await (supabase as any)
-          .from("payouts")
-          .update({
-            status: "completed",
-            reference_id: rpPayout.id,
-            paid_at: new Date().toISOString(),
-          })
-          .eq("id", payoutId);
+        await payoutRepo.updateStatus(payoutId, {
+          status: "completed",
+          reference_id: rpPayout.id,
+          paid_at: new Date().toISOString(),
+        });
       } catch (rpErr) {
-        await (supabase as any)
-          .from("payouts")
-          .update({ status: "failed" })
-          .eq("id", payoutId);
+        await payoutRepo.updateStatus(payoutId, { status: "failed" });
         return { error: rpErr instanceof Error ? rpErr.message : "Payout processing failed." };
       }
     } else {
       // No fund account — mark as completed manually (offline payout)
-      await (supabase as any)
-        .from("payouts")
-        .update({
-          status: "completed",
-          paid_at: new Date().toISOString(),
-        })
-        .eq("id", payoutId);
+      await payoutRepo.updateStatus(payoutId, {
+        status: "completed",
+        paid_at: new Date().toISOString(),
+      });
     }
 
     return { success: true };
@@ -226,19 +177,18 @@ export async function createPayoutForEvent(
   eventId: string,
 ): Promise<{ success: true; payoutsCreated: number } | { error: string }> {
   try {
-    const { user } = await getAuthenticatedUser();
+    const { user } = await requireAuth();
     assertAdmin(user);
 
     const supabase = createAdminClient();
+    const payoutRepo = new PayoutRepository(supabase);
 
     // Fetch event with its trek's organizer
     const { data: eventRaw, error: eventError } = await (supabase as any)
       .from("trek_events")
       .select(
-        `
-        id, trek_id, status,
-        treks(organizer_id, organizers(id, commission_rate, free_period_ends_at))
-        `,
+        `id, trek_id, status,
+        treks(organizer_id, organizers(id, commission_rate, free_period_ends_at))`,
       )
       .eq("id", eventId)
       .single();
@@ -259,7 +209,7 @@ export async function createPayoutForEvent(
     const commissionRate: number = organizers.commission_rate;
     const freePeriodEndsAt: string | null = organizers.free_period_ends_at;
 
-    // Determine effective commission — respect free period
+    // Determine effective commission
     let effectiveCommission = COMMISSION_RATE;
     if (freePeriodEndsAt && new Date() <= new Date(freePeriodEndsAt)) {
       effectiveCommission = 0;
@@ -267,7 +217,7 @@ export async function createPayoutForEvent(
       effectiveCommission = commissionRate;
     }
 
-    // Fetch all confirmed bookings for this event
+    // Fetch confirmed bookings
     const { data: bookingsRaw, error: bookingsError } = await (supabase as any)
       .from("bookings")
       .select("id, total_amount")
@@ -280,24 +230,26 @@ export async function createPayoutForEvent(
       return { error: "No confirmed bookings found for this event." };
     }
 
-    // Check which bookings already have a payout for this event
-    const { data: existingPayoutsRaw } = await (supabase as any)
-      .from("payouts")
-      .select("trek_event_id")
-      .eq("organizer_id", organizerId)
-      .eq("trek_event_id", eventId);
-
-    // If a payout already exists for this event, skip
-    if (existingPayoutsRaw && (existingPayoutsRaw as any[]).length > 0) {
+    // Check if payout already exists for this event
+    const { payouts: existingPayouts } = await payoutRepo.findPaginated({
+      organizerId,
+      status: null,
+      page: 1,
+      limit: 1,
+    });
+    const hasExisting = (existingPayouts as any[]).some(
+      (p: any) => (p.trek_events?.id ?? p.trek_event_id) === eventId,
+    );
+    if (hasExisting) {
       return { error: "A payout already exists for this event." };
     }
 
-    // Aggregate totals for a single event-level payout record
+    // Aggregate totals
     const totalCollected = bookings.reduce((sum, b) => sum + b.total_amount, 0);
     const commission = Math.round(totalCollected * effectiveCommission * 100) / 100;
     const payoutAmount = totalCollected - commission;
 
-    const { error: insertError } = await (supabase as any).from("payouts").insert({
+    await payoutRepo.create({
       organizer_id: organizerId,
       trek_event_id: eventId,
       total_collected: totalCollected,
@@ -305,8 +257,6 @@ export async function createPayoutForEvent(
       payout_amount: payoutAmount,
       status: "pending",
     });
-
-    if (insertError) return { error: insertError.message };
 
     return { success: true, payoutsCreated: 1 };
   } catch (err) {
@@ -336,35 +286,17 @@ export async function getOrganizerPayouts(): Promise<{
   error?: string;
 }> {
   try {
-    const { supabase, user } = await getAuthenticatedUser();
+    const { supabase, organizerId } = await requireOrganizer();
+    const payoutRepo = new PayoutRepository(supabase);
 
-    // Get organizer record
-    const { data: organizerRaw, error: orgError } = await (supabase as any)
-      .from("organizers")
-      .select("id")
-      .eq("profile_id", user.id)
-      .single();
+    const { payouts } = await payoutRepo.findPaginated({
+      organizerId,
+      status: null,
+      page: 1,
+      limit: 100,
+    });
 
-    if (orgError || !organizerRaw) return { data: [], error: "Organizer profile not found." };
-    const organizer = organizerRaw as { id: string };
-
-    const { data, error } = await (supabase as any)
-      .from("payouts")
-      .select(
-        `
-        *,
-        trek_events(
-          event_date,
-          treks(title)
-        )
-        `,
-      )
-      .eq("organizer_id", organizer.id)
-      .order("created_at", { ascending: false });
-
-    if (error) return { data: [], error: error.message };
-
-    const result: OrganizerPayoutItem[] = ((data as any[]) ?? []).map((p: any) => {
+    const result: OrganizerPayoutItem[] = (payouts as any[]).map((p: any) => {
       const events = Array.isArray(p.trek_events) ? p.trek_events[0] : p.trek_events;
       const trek = events
         ? Array.isArray(events.treks) ? events.treks[0] : events.treks
@@ -372,8 +304,8 @@ export async function getOrganizerPayouts(): Promise<{
 
       return {
         id: p.id,
-        organizer_id: p.organizer_id,
-        trek_event_id: p.trek_event_id,
+        organizer_id: p.organizer_id ?? organizerId,
+        trek_event_id: p.trek_event_id ?? events?.id ?? "",
         total_collected: p.total_collected,
         commission: p.commission,
         payout_amount: p.payout_amount,

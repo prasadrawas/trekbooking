@@ -1,8 +1,6 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
-import { type NextRequest, NextResponse } from "next/server";
-import { createClient } from "@/lib/supabase/server";
-
-// ─── YouTube URL validation ───────────────────────────────────────────────────
+import { requireAuth } from "@/lib/auth";
+import { withErrorHandling, jsonOk, jsonError } from "@/lib/api-utils";
+import { VideoRepository } from "@/lib/repositories";
 
 const YOUTUBE_URL_REGEX =
   /^(https?:\/\/)?(www\.)?(youtube\.com\/(watch\?v=|shorts\/|embed\/)|youtu\.be\/)[\w-]{11}([&?][\w=&-]*)?$/;
@@ -11,113 +9,47 @@ function isValidYouTubeUrl(url: string): boolean {
   return YOUTUBE_URL_REGEX.test(url);
 }
 
-// ─── PUT /api/videos/:id — Update video (auth: owner) ────────────────────────
+// PUT /api/videos/:id — Update video (auth: owner)
+export const PUT = withErrorHandling(async (request, { params }) => {
+  const { id } = await params;
+  const { supabase, user } = await requireAuth();
+  const repo = new VideoRepository(supabase);
 
-export async function PUT(
-  request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-): Promise<NextResponse> {
-  try {
-    const { id } = await params;
-    const supabase = await createClient();
+  const body = await request.json();
+  const { youtube_url, trek_id, title } = body;
 
-    const { data: { user }, error: authError } = await supabase.auth.getUser();
-    if (authError || !user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
-
-    const body = await request.json();
-    const { youtube_url, trek_id, title } = body as {
-      youtube_url?: string;
-      trek_id?: string | null;
-      title?: string | null;
-    };
-
-    if (youtube_url !== undefined && !isValidYouTubeUrl(youtube_url)) {
-      return NextResponse.json({ error: "Invalid YouTube URL" }, { status: 422 });
-    }
-
-    // If trek_id provided, verify it exists
-    if (trek_id) {
-      const { data: trek, error: trekError } = await (supabase as any)
-        .from("treks")
-        .select("id")
-        .eq("id", trek_id)
-        .single();
-
-      if (trekError || !trek) {
-        return NextResponse.json({ error: "Trek not found" }, { status: 404 });
-      }
-    }
-
-    const updates: Record<string, unknown> = {};
-    if (youtube_url !== undefined) updates.youtube_url = youtube_url;
-    if (trek_id !== undefined) updates.trek_id = trek_id;
-    if (title !== undefined) updates.title = title;
-
-    if (Object.keys(updates).length === 0) {
-      return NextResponse.json({ error: "No updatable fields provided" }, { status: 400 });
-    }
-
-    const { data: video, error: updateError } = await (supabase as any)
-      .from("trekker_videos")
-      .update(updates)
-      .eq("id", id)
-      .eq("trekker_id", user.id)
-      .select("*")
-      .single();
-
-    if (updateError) {
-      console.error("[PUT /api/videos/:id] Update error:", updateError.message);
-      return NextResponse.json({ error: "Failed to update video" }, { status: 500 });
-    }
-
-    if (!video) {
-      // Row not found or doesn't belong to this user
-      return NextResponse.json({ error: "Video not found or forbidden" }, { status: 404 });
-    }
-
-    return NextResponse.json({ video });
-  } catch (err) {
-    console.error("[PUT /api/videos/:id] Unhandled error:", err);
-    return NextResponse.json({ error: "Internal server error" }, { status: 500 });
+  if (youtube_url !== undefined && !isValidYouTubeUrl(youtube_url)) {
+    return jsonError("Invalid YouTube URL", 422);
   }
-}
 
-// ─── DELETE /api/videos/:id — Delete video (auth: owner) ─────────────────────
-
-export async function DELETE(
-  _request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-): Promise<NextResponse> {
-  try {
-    const { id } = await params;
-    const supabase = await createClient();
-
-    const { data: { user }, error: authError } = await supabase.auth.getUser();
-    if (authError || !user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
-
-    const { error: deleteError, count } = await (supabase as any)
-      .from("trekker_videos")
-      .delete({ count: "exact" })
-      .eq("id", id)
-      .eq("trekker_id", user.id);
-
-    if (deleteError) {
-      console.error("[DELETE /api/videos/:id] Delete error:", deleteError.message);
-      return NextResponse.json({ error: "Failed to delete video" }, { status: 500 });
-    }
-
-    if (count === 0) {
-      // Row not found or doesn't belong to this user
-      return NextResponse.json({ error: "Video not found or forbidden" }, { status: 404 });
-    }
-
-    return NextResponse.json({ success: true });
-  } catch (err) {
-    console.error("[DELETE /api/videos/:id] Unhandled error:", err);
-    return NextResponse.json({ error: "Internal server error" }, { status: 500 });
+  if (trek_id) {
+    const trek = await repo.findTrekById(trek_id);
+    if (!trek) return jsonError("Trek not found", 404);
   }
-}
+
+  const updates: Record<string, unknown> = {};
+  if (youtube_url !== undefined) updates.youtube_url = youtube_url;
+  if (trek_id !== undefined) updates.trek_id = trek_id;
+  if (title !== undefined) updates.title = title;
+
+  if (Object.keys(updates).length === 0) {
+    return jsonError("No updatable fields provided", 400);
+  }
+
+  const video = await repo.update(id, user.id, updates);
+  if (!video) return jsonError("Video not found or forbidden", 404);
+
+  return jsonOk({ video });
+});
+
+// DELETE /api/videos/:id — Delete video (auth: owner)
+export const DELETE = withErrorHandling(async (_request, { params }) => {
+  const { id } = await params;
+  const { supabase, user } = await requireAuth();
+  const repo = new VideoRepository(supabase);
+
+  const count = await repo.delete(id, user.id);
+  if (count === 0) return jsonError("Video not found or forbidden", 404);
+
+  return jsonOk({ success: true });
+});

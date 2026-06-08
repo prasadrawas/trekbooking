@@ -1,132 +1,52 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
-import { type NextRequest, NextResponse } from "next/server";
-import { createClient } from "@/lib/supabase/server";
+import { requireAuth } from "@/lib/auth";
+import { withErrorHandling, jsonOk, jsonError } from "@/lib/api-utils";
+import { PayoutRepository, ProfileRepository, OrganizerRepository } from "@/lib/repositories";
 
-// ─── GET /api/payouts — List payouts (auth: organizer or admin) ───────────────
+// GET /api/payouts — List payouts (auth: organizer or admin)
+export const GET = withErrorHandling(async (request) => {
+  const { supabase, user } = await requireAuth();
 
-export async function GET(request: NextRequest): Promise<NextResponse> {
-  try {
-    const supabase = await createClient();
+  const profileRepo = new ProfileRepository(supabase);
+  const profile = await profileRepo.findRoleById(user.id);
+  if (!profile) return jsonError("Profile not found", 404);
 
-    const { data: { user }, error: authError } = await supabase.auth.getUser();
-    if (authError || !user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
+  const isAdmin = profile.role === "admin";
+  const isOrganizer = profile.role === "organizer";
+  if (!isAdmin && !isOrganizer) return jsonError("Forbidden", 403);
 
-    // Fetch user profile role
-    const { data: profileRaw, error: profileError } = await (supabase as any)
-      .from("profiles")
-      .select("role")
-      .eq("id", user.id)
-      .single();
+  const { searchParams } = new URL(request.url);
+  const statusFilter = searchParams.get("status");
+  const page = Math.max(1, parseInt(searchParams.get("page") ?? "1", 10));
+  const limit = 20;
 
-    if (profileError || !profileRaw) {
-      return NextResponse.json({ error: "Profile not found" }, { status: 404 });
-    }
-
-    const profile = profileRaw as { role: string };
-    const isAdmin = profile.role === "admin";
-    const isOrganizer = profile.role === "organizer";
-
-    if (!isAdmin && !isOrganizer) {
-      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
-    }
-
-    const { searchParams } = new URL(request.url);
-    const statusFilter = searchParams.get("status");
-    const page = Math.max(1, parseInt(searchParams.get("page") ?? "1", 10));
-    const limit = 20;
-    const offset = (page - 1) * limit;
-
-    // Look up organizer ID once — reused for both the paginated query and the summary
-    let orgId: string | null = null;
-    if (isOrganizer) {
-      const { data: organizerRaw } = await (supabase as any)
-        .from("organizers")
-        .select("id")
-        .eq("profile_id", user.id)
-        .single();
-
-      if (!organizerRaw) {
-        return NextResponse.json({ error: "Organizer profile not found" }, { status: 404 });
-      }
-
-      orgId = (organizerRaw as { id: string }).id;
-    }
-
-    let query = (supabase as any)
-      .from("payouts")
-      .select(`
-        id,
-        total_collected,
-        commission,
-        payout_amount,
-        status,
-        paid_at,
-        reference_id,
-        created_at,
-        organizers (
-          id,
-          org_name,
-          slug
-        ),
-        trek_events (
-          id,
-          event_date,
-          treks (
-            id,
-            title,
-            slug
-          )
-        )
-      `, { count: "exact" });
-
-    // Scope to organizer's own payouts unless admin
-    if (isOrganizer && orgId) {
-      query = query.eq("organizer_id", orgId);
-    }
-
-    if (statusFilter) {
-      query = query.eq("status", statusFilter);
-    }
-
-    const { data: payouts, error, count } = await query
-      .order("created_at", { ascending: false })
-      .range(offset, offset + limit - 1);
-
-    if (error) {
-      console.error("[GET /api/payouts] DB error:", error.message);
-      return NextResponse.json({ error: "Failed to fetch payouts" }, { status: 500 });
-    }
-
-    // Compute summary totals — reuse the same org scope, avoid a second org lookup
-    let summaryQuery = (supabase as any)
-      .from("payouts")
-      .select("payout_amount, status")
-      .limit(10000); // Bound the summary query to prevent unbounded fetch
-
-    if (isOrganizer && orgId) {
-      summaryQuery = summaryQuery.eq("organizer_id", orgId);
-    }
-
-    const { data: allPayouts } = await summaryQuery;
-    const allRows = (allPayouts ?? []) as { payout_amount: number; status: string }[];
-
-    const totalEarned = allRows
-      .filter((p) => p.status === "completed")
-      .reduce((sum, p) => sum + (p.payout_amount ?? 0), 0);
-
-    const pendingAmount = allRows
-      .filter((p) => p.status === "pending")
-      .reduce((sum, p) => sum + (p.payout_amount ?? 0), 0);
-
-    return NextResponse.json({
-      payouts: payouts ?? [],
-      total: count ?? 0,
-      summary: { totalEarned, pendingAmount },
-    });
-  } catch (err) {
-    console.error("[GET /api/payouts] Unhandled error:", err);
-    return NextResponse.json({ error: "Internal server error" }, { status: 500 });
+  let orgId: string | null = null;
+  if (isOrganizer) {
+    const orgRepo = new OrganizerRepository(supabase);
+    const org = await orgRepo.findIdByProfileId(user.id);
+    if (!org) return jsonError("Organizer profile not found", 404);
+    orgId = org.id;
   }
-}
+
+  const payoutRepo = new PayoutRepository(supabase);
+  const { payouts, total } = await payoutRepo.findPaginated({
+    organizerId: isOrganizer ? orgId : null,
+    status: statusFilter,
+    page,
+    limit,
+  });
+
+  // Compute summary totals
+  const summaryRows = await payoutRepo.findSummary(isOrganizer ? orgId : null);
+  const totalEarned = summaryRows
+    .filter((p) => p.status === "completed")
+    .reduce((sum, p) => sum + (p.payout_amount ?? 0), 0);
+  const pendingAmount = summaryRows
+    .filter((p) => p.status === "pending")
+    .reduce((sum, p) => sum + (p.payout_amount ?? 0), 0);
+
+  return jsonOk({
+    payouts,
+    total,
+    summary: { totalEarned, pendingAmount },
+  });
+});

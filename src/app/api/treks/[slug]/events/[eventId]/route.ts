@@ -1,142 +1,57 @@
-import { NextRequest, NextResponse } from "next/server";
+import { requireAuth } from "@/lib/auth";
+import { withErrorHandling, jsonOk, jsonError } from "@/lib/api-utils";
+import { TrekRepository, TrekEventRepository } from "@/lib/repositories";
 import { createClient } from "@/lib/supabase/server";
 
-async function getUser(supabase: any) {
-  const {
-    data: { user },
-    error,
-  } = await supabase.auth.getUser();
-  if (error || !user) return null;
-  return user;
-}
-
-async function verifyTrekOwnership(supabase: any, slug: string, userId: string) {
-  const { data: trek } = await (supabase as any)
-    .from("treks")
-    .select("id, organizer_id, organizers!inner(profile_id)")
-    .eq("slug", slug)
-    .single();
-  if (!trek || trek.organizers?.profile_id !== userId) return null;
-  return trek;
-}
-
 // GET /api/treks/:slug/events/:eventId — Get event detail with pickup points
-export async function GET(
-  _request: NextRequest,
-  { params }: { params: Promise<{ slug: string; eventId: string }> }
-) {
+export const GET = withErrorHandling(async (_request, { params }) => {
   const { slug, eventId } = await params;
   const supabase = await createClient();
+  const trekRepo = new TrekRepository(supabase);
 
-  // Verify event belongs to the trek identified by slug
-  const { data: trek } = await (supabase as any)
-    .from("treks")
-    .select("id")
-    .eq("slug", slug)
-    .single();
+  const trekId = await trekRepo.findIdBySlug(slug);
+  if (!trekId) return jsonError("Trek not found", 404);
 
-  if (!trek) {
-    return NextResponse.json({ error: "Trek not found" }, { status: 404 });
-  }
+  const eventRepo = new TrekEventRepository(supabase);
+  const event = await eventRepo.findByIdAndTrekId(eventId, trekId);
+  if (!event) return jsonError("Event not found", 404);
 
-  const { data: event, error } = await (supabase as any)
-    .from("trek_events")
-    .select(
-      `
-      id, event_date, end_date, reporting_time, price, child_price,
-      total_seats, booked_seats, status, created_at,
-      pickup_points(id, label, address, pickup_time, maps_url)
-    `
-    )
-    .eq("id", eventId)
-    .eq("trek_id", trek.id)
-    .single();
-
-  if (error || !event) {
-    return NextResponse.json({ error: "Event not found" }, { status: 404 });
-  }
-
-  return NextResponse.json({ event });
-}
+  return jsonOk({ event });
+});
 
 // PUT /api/treks/:slug/events/:eventId — Update event (auth: owner)
-export async function PUT(
-  request: NextRequest,
-  { params }: { params: Promise<{ slug: string; eventId: string }> }
-) {
+export const PUT = withErrorHandling(async (request, { params }) => {
   const { slug, eventId } = await params;
-  const supabase = await createClient();
+  const { supabase, user } = await requireAuth();
+  const trekRepo = new TrekRepository(supabase);
 
-  const user = await getUser(supabase);
-  if (!user) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
+  const owned = await trekRepo.verifyOwnership(slug, user.id);
+  if (!owned) return jsonError("Forbidden", 403);
 
-  const owned = await verifyTrekOwnership(supabase, slug, user.id);
-  if (!owned) {
-    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
-  }
-
-  let body: any;
-  try {
-    body = await request.json();
-  } catch {
-    return NextResponse.json({ error: "Invalid JSON body" }, { status: 400 });
-  }
-
-  // Prevent overwriting protected fields
+  const body = await request.json();
   delete body.id;
   delete body.trek_id;
   delete body.booked_seats;
   delete body.created_at;
 
-  const { data: event, error } = await (supabase as any)
-    .from("trek_events")
-    .update({ ...body })
-    .eq("id", eventId)
-    .eq("trek_id", owned.id)
-    .select()
-    .single();
+  const eventRepo = new TrekEventRepository(supabase);
+  const event = await eventRepo.update(eventId, owned.id, body);
+  if (!event) return jsonError("Event not found", 404);
 
-  if (error) {
-    return NextResponse.json({ error: error.message }, { status: 500 });
-  }
-
-  if (!event) {
-    return NextResponse.json({ error: "Event not found" }, { status: 404 });
-  }
-
-  return NextResponse.json({ event });
-}
+  return jsonOk({ event });
+});
 
 // DELETE /api/treks/:slug/events/:eventId — Cancel event (auth: owner)
-// Sets status to 'cancelled'
-export async function DELETE(
-  _request: NextRequest,
-  { params }: { params: Promise<{ slug: string; eventId: string }> }
-) {
+export const DELETE = withErrorHandling(async (_request, { params }) => {
   const { slug, eventId } = await params;
-  const supabase = await createClient();
+  const { supabase, user } = await requireAuth();
+  const trekRepo = new TrekRepository(supabase);
 
-  const user = await getUser(supabase);
-  if (!user) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
+  const owned = await trekRepo.verifyOwnership(slug, user.id);
+  if (!owned) return jsonError("Forbidden", 403);
 
-  const owned = await verifyTrekOwnership(supabase, slug, user.id);
-  if (!owned) {
-    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
-  }
+  const eventRepo = new TrekEventRepository(supabase);
+  await eventRepo.delete(eventId, owned.id);
 
-  const { error } = await (supabase as any)
-    .from("trek_events")
-    .update({ status: "cancelled" })
-    .eq("id", eventId)
-    .eq("trek_id", owned.id);
-
-  if (error) {
-    return NextResponse.json({ error: error.message }, { status: 500 });
-  }
-
-  return NextResponse.json({ success: true });
-}
+  return jsonOk({ success: true });
+});

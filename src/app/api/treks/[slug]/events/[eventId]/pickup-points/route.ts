@@ -1,128 +1,51 @@
-import { NextRequest, NextResponse } from "next/server";
+import { requireAuth } from "@/lib/auth";
+import { withErrorHandling, jsonOk, jsonError } from "@/lib/api-utils";
+import { PickupPointRepository } from "@/lib/repositories";
 import { createClient } from "@/lib/supabase/server";
 
-async function getUser(supabase: any) {
-  const {
-    data: { user },
-    error,
-  } = await supabase.auth.getUser();
-  if (error || !user) return null;
-  return user;
-}
-
-async function verifyTrekOwnership(supabase: any, slug: string, userId: string) {
-  const { data: trek } = await (supabase as any)
-    .from("treks")
-    .select("id, organizer_id, organizers!inner(profile_id)")
-    .eq("slug", slug)
-    .single();
-  if (!trek || trek.organizers?.profile_id !== userId) return null;
-  return trek;
-}
-
-async function resolveEvent(supabase: any, trekId: string, eventId: string) {
-  const { data: event } = await (supabase as any)
-    .from("trek_events")
-    .select("id")
-    .eq("id", eventId)
-    .eq("trek_id", trekId)
-    .single();
-  return event ?? null;
-}
-
-// GET /api/treks/:slug/events/:eventId/pickup-points — List pickup points for event (public)
-export async function GET(
-  _request: NextRequest,
-  { params }: { params: Promise<{ slug: string; eventId: string }> }
-) {
+// GET /api/treks/:slug/events/:eventId/pickup-points — List pickup points (public)
+export const GET = withErrorHandling(async (_request, { params }) => {
   const { slug, eventId } = await params;
   const supabase = await createClient();
+  const repo = new PickupPointRepository(supabase);
 
-  const { data: trek } = await (supabase as any)
-    .from("treks")
-    .select("id")
-    .eq("slug", slug)
-    .single();
+  const trek = await repo.findTrekIdBySlug(slug);
+  if (!trek) return jsonError("Trek not found", 404);
 
-  if (!trek) {
-    return NextResponse.json({ error: "Trek not found" }, { status: 404 });
-  }
+  const event = await repo.findEventById(eventId, trek.id);
+  if (!event) return jsonError("Event not found", 404);
 
-  const event = await resolveEvent(supabase, trek.id, eventId);
-  if (!event) {
-    return NextResponse.json({ error: "Event not found" }, { status: 404 });
-  }
-
-  const { data: pickupPoints, error } = await (supabase as any)
-    .from("pickup_points")
-    .select("id, label, address, pickup_time, maps_url, extra_charge, sort_order")
-    .eq("trek_event_id", eventId)
-    .order("sort_order", { ascending: true });
-
-  if (error) {
-    return NextResponse.json({ error: error.message }, { status: 500 });
-  }
-
-  return NextResponse.json({ pickup_points: pickupPoints ?? [] });
-}
+  const pickupPoints = await repo.findByEventId(eventId);
+  return jsonOk({ pickup_points: pickupPoints });
+});
 
 // POST /api/treks/:slug/events/:eventId/pickup-points — Add pickup point (auth: owner)
-export async function POST(
-  request: NextRequest,
-  { params }: { params: Promise<{ slug: string; eventId: string }> }
-) {
+export const POST = withErrorHandling(async (request, { params }) => {
   const { slug, eventId } = await params;
-  const supabase = await createClient();
+  const { supabase, user } = await requireAuth();
+  const repo = new PickupPointRepository(supabase);
 
-  const user = await getUser(supabase);
-  if (!user) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
+  const owned = await repo.verifyTrekOwnership(slug, user.id);
+  if (!owned) return jsonError("Forbidden", 403);
 
-  const owned = await verifyTrekOwnership(supabase, slug, user.id);
-  if (!owned) {
-    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
-  }
+  const event = await repo.findEventById(eventId, owned.id);
+  if (!event) return jsonError("Event not found", 404);
 
-  const event = await resolveEvent(supabase, owned.id, eventId);
-  if (!event) {
-    return NextResponse.json({ error: "Event not found" }, { status: 404 });
-  }
+  const body = await request.json();
+  const { label, pickup_time } = body;
 
-  let body: any;
-  try {
-    body = await request.json();
-  } catch {
-    return NextResponse.json({ error: "Invalid JSON body" }, { status: 400 });
-  }
+  if (!label) return jsonError("label is required", 400);
+  if (!pickup_time) return jsonError("pickup_time is required", 400);
 
-  const { label, address, pickup_time, maps_url, extra_charge, sort_order } = body;
+  const pickupPoint = await repo.create({
+    trek_event_id: eventId,
+    label,
+    address: body.address ?? null,
+    pickup_time,
+    maps_url: body.maps_url ?? null,
+    extra_charge: body.extra_charge ?? 0,
+    sort_order: body.sort_order ?? 0,
+  });
 
-  if (!label) {
-    return NextResponse.json({ error: "label is required" }, { status: 400 });
-  }
-
-  if (!pickup_time) {
-    return NextResponse.json({ error: "pickup_time is required" }, { status: 400 });
-  }
-
-  const { data: pickupPoint, error } = await (supabase as any)
-    .from("pickup_points")
-    .insert({
-      trek_event_id: eventId,
-      label,
-      address: address ?? null,
-      pickup_time,
-      maps_url: maps_url ?? null,
-      extra_charge: extra_charge ?? 0,
-      sort_order: sort_order ?? 0,
-    })
-    .select()
-    .single();
-
-  if (error) {
-    return NextResponse.json({ error: error.message }, { status: 500 });
-  }
-
-  return NextResponse.json({ pickup_point: pickupPoint }, { status: 201 });
-}
+  return jsonOk({ pickup_point: pickupPoint }, 201);
+});

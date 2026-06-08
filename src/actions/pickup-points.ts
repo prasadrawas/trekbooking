@@ -1,38 +1,13 @@
 "use server";
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
+import { requireOrganizer } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
+import { PickupPointRepository } from "@/lib/repositories";
 import type { PickupPoint } from "@/types/database";
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
-async function getAuthenticatedUser() {
-  const supabase = await createClient();
-  const {
-    data: { user },
-    error,
-  } = await supabase.auth.getUser();
-  if (error || !user) throw new Error("Not authenticated");
-  return { supabase, user };
-}
-
-async function getOrganizerForUser(
-  supabase: Awaited<ReturnType<typeof createClient>>,
-  userId: string,
-): Promise<{ id: string }> {
-  const { data, error } = await (supabase as any)
-    .from("organizers")
-    .select("id, status")
-    .eq("profile_id", userId)
-    .single();
-  if (error || !data) throw new Error("Organizer profile not found");
-  if ((data as any).status !== "active") throw new Error("Organizer account is not active");
-  return data as { id: string };
-}
-
-/**
- * Returns the organizer_id for the trek that owns this event.
- */
 async function getEventOrganizerId(
   supabase: Awaited<ReturnType<typeof createClient>>,
   eventId: string,
@@ -47,9 +22,6 @@ async function getEventOrganizerId(
   return Array.isArray(treks) ? treks[0].organizer_id : treks.organizer_id;
 }
 
-/**
- * Returns the organizer_id for the trek that owns this pickup point's event.
- */
 async function getPickupOrganizerId(
   supabase: Awaited<ReturnType<typeof createClient>>,
   pointId: string,
@@ -81,36 +53,29 @@ export async function addPickupPoint(
   data: AddPickupPointData,
 ): Promise<{ success: true; pointId: string } | { error: string }> {
   try {
-    const { supabase, user } = await getAuthenticatedUser();
-    const organizer = await getOrganizerForUser(supabase, user.id);
+    const { supabase, organizerId } = await requireOrganizer();
     const eventOrgId = await getEventOrganizerId(supabase, eventId);
-    if (eventOrgId !== organizer.id) return { error: "Access denied." };
+    if (eventOrgId !== organizerId) return { error: "Access denied." };
 
     if (!data.label?.trim()) return { error: "Pickup label is required." };
     if (!data.pickup_time?.trim()) return { error: "Pickup time is required." };
 
+    const pickupRepo = new PickupPointRepository(supabase);
+
     // Determine sort_order from existing points count
-    const { count } = await (supabase as any)
-      .from("pickup_points")
-      .select("id", { count: "exact", head: true })
-      .eq("trek_event_id", eventId);
+    const existing = await pickupRepo.findByEventId(eventId);
 
-    const { data: inserted, error } = await (supabase as any)
-      .from("pickup_points")
-      .insert({
-        trek_event_id: eventId,
-        label: data.label.trim(),
-        address: data.address?.trim() ?? null,
-        pickup_time: data.pickup_time.trim(),
-        maps_url: data.maps_url ?? null,
-        extra_charge: data.extra_charge ?? 0,
-        sort_order: ((count as number) ?? 0) + 1,
-      })
-      .select("id")
-      .single();
+    const inserted = await pickupRepo.create({
+      trek_event_id: eventId,
+      label: data.label.trim(),
+      address: data.address?.trim() ?? null,
+      pickup_time: data.pickup_time.trim(),
+      maps_url: data.maps_url ?? null,
+      extra_charge: data.extra_charge ?? 0,
+      sort_order: existing.length + 1,
+    });
 
-    if (error) return { error: error.message };
-    return { success: true, pointId: (inserted as { id: string }).id };
+    return { success: true, pointId: (inserted as any).id };
   } catch (err) {
     return { error: err instanceof Error ? err.message : "Failed to add pickup point." };
   }
@@ -132,10 +97,9 @@ export async function updatePickupPoint(
   data: UpdatePickupPointData,
 ): Promise<{ success: true } | { error: string }> {
   try {
-    const { supabase, user } = await getAuthenticatedUser();
-    const organizer = await getOrganizerForUser(supabase, user.id);
+    const { supabase, organizerId } = await requireOrganizer();
     const pointOrgId = await getPickupOrganizerId(supabase, pointId);
-    if (pointOrgId !== organizer.id) return { error: "Access denied." };
+    if (pointOrgId !== organizerId) return { error: "Access denied." };
 
     const updates: Record<string, unknown> = {};
     if (data.label !== undefined) updates.label = data.label.trim();
@@ -147,11 +111,15 @@ export async function updatePickupPoint(
 
     if (Object.keys(updates).length === 0) return { error: "No fields to update." };
 
-    const { error } = await (supabase as any)
+    // Get event ID for the pickup point
+    const { data: ppData } = await (supabase as any)
       .from("pickup_points")
-      .update(updates)
-      .eq("id", pointId);
-    if (error) return { error: error.message };
+      .select("trek_event_id")
+      .eq("id", pointId)
+      .single();
+
+    const pickupRepo = new PickupPointRepository(supabase);
+    await pickupRepo.update(pointId, ppData.trek_event_id, updates);
 
     return { success: true };
   } catch (err) {
@@ -165,16 +133,19 @@ export async function deletePickupPoint(
   pointId: string,
 ): Promise<{ success: true } | { error: string }> {
   try {
-    const { supabase, user } = await getAuthenticatedUser();
-    const organizer = await getOrganizerForUser(supabase, user.id);
+    const { supabase, organizerId } = await requireOrganizer();
     const pointOrgId = await getPickupOrganizerId(supabase, pointId);
-    if (pointOrgId !== organizer.id) return { error: "Access denied." };
+    if (pointOrgId !== organizerId) return { error: "Access denied." };
 
-    const { error } = await (supabase as any)
+    // Get event ID for the pickup point
+    const { data: ppData } = await (supabase as any)
       .from("pickup_points")
-      .delete()
-      .eq("id", pointId);
-    if (error) return { error: error.message };
+      .select("trek_event_id")
+      .eq("id", pointId)
+      .single();
+
+    const pickupRepo = new PickupPointRepository(supabase);
+    await pickupRepo.delete(pointId, ppData.trek_event_id);
 
     return { success: true };
   } catch (err) {
@@ -190,15 +161,9 @@ export async function getPickupPoints(eventId: string): Promise<{
 }> {
   try {
     const supabase = await createClient();
-
-    const { data, error } = await (supabase as any)
-      .from("pickup_points")
-      .select("*")
-      .eq("trek_event_id", eventId)
-      .order("sort_order", { ascending: true });
-
-    if (error) return { data: [], error: error.message };
-    return { data: (data ?? []) as PickupPoint[] };
+    const pickupRepo = new PickupPointRepository(supabase);
+    const data = await pickupRepo.findByEventId(eventId);
+    return { data: data as PickupPoint[] };
   } catch (err) {
     return {
       data: [],
@@ -214,8 +179,7 @@ export async function copyPickupPointsFromEvent(
   targetEventId: string,
 ): Promise<{ success: true; count: number } | { error: string }> {
   try {
-    const { supabase, user } = await getAuthenticatedUser();
-    const organizer = await getOrganizerForUser(supabase, user.id);
+    const { supabase, organizerId } = await requireOrganizer();
 
     // Verify organizer owns both events
     const [sourceOrgId, targetOrgId] = await Promise.all([
@@ -223,52 +187,38 @@ export async function copyPickupPointsFromEvent(
       getEventOrganizerId(supabase, targetEventId),
     ]);
 
-    if (sourceOrgId !== organizer.id || targetOrgId !== organizer.id) {
+    if (sourceOrgId !== organizerId || targetOrgId !== organizerId) {
       return { error: "Access denied." };
     }
 
-    // Fetch source pickup points
-    const { data: sourcePoints, error: fetchError } = await (supabase as any)
-      .from("pickup_points")
-      .select("*")
-      .eq("trek_event_id", sourceEventId)
-      .order("sort_order", { ascending: true });
+    const pickupRepo = new PickupPointRepository(supabase);
 
-    if (fetchError) return { error: fetchError.message };
-    if (!sourcePoints || (sourcePoints as any[]).length === 0) {
+    // Fetch source pickup points
+    const sourcePoints = await pickupRepo.findByEventId(sourceEventId);
+    if (sourcePoints.length === 0) {
       return { error: "No pickup points found in source event." };
     }
 
     // Delete existing points in target event before copying
-    await (supabase as any)
-      .from("pickup_points")
-      .delete()
-      .eq("trek_event_id", targetEventId);
+    const targetPoints = await pickupRepo.findByEventId(targetEventId);
+    for (const tp of targetPoints) {
+      await pickupRepo.delete((tp as any).id, targetEventId);
+    }
 
     // Insert copies
-    const copies = (sourcePoints as Array<{
-      label: string;
-      address: string | null;
-      pickup_time: string;
-      maps_url: string | null;
-      extra_charge: number;
-      sort_order: number;
-    }>).map((p) => ({
-      trek_event_id: targetEventId,
-      label: p.label,
-      address: p.address,
-      pickup_time: p.pickup_time,
-      maps_url: p.maps_url,
-      extra_charge: p.extra_charge,
-      sort_order: p.sort_order,
-    }));
+    for (const p of sourcePoints) {
+      await pickupRepo.create({
+        trek_event_id: targetEventId,
+        label: (p as any).label,
+        address: (p as any).address,
+        pickup_time: (p as any).pickup_time,
+        maps_url: (p as any).maps_url,
+        extra_charge: (p as any).extra_charge,
+        sort_order: (p as any).sort_order,
+      });
+    }
 
-    const { error: insertError } = await (supabase as any)
-      .from("pickup_points")
-      .insert(copies);
-    if (insertError) return { error: insertError.message };
-
-    return { success: true, count: copies.length };
+    return { success: true, count: sourcePoints.length };
   } catch (err) {
     return { error: err instanceof Error ? err.message : "Failed to copy pickup points." };
   }

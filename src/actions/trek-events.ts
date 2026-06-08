@@ -1,68 +1,10 @@
 "use server";
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
+import { requireOrganizer } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
+import { TrekEventRepository, PickupPointRepository } from "@/lib/repositories";
 import type { TrekEvent } from "@/types/database";
-
-// ─── Helpers ──────────────────────────────────────────────────────────────────
-
-async function getAuthenticatedUser() {
-  const supabase = await createClient();
-  const {
-    data: { user },
-    error,
-  } = await supabase.auth.getUser();
-  if (error || !user) throw new Error("Not authenticated");
-  return { supabase, user };
-}
-
-async function getOrganizerForUser(
-  supabase: Awaited<ReturnType<typeof createClient>>,
-  userId: string,
-): Promise<{ id: string }> {
-  const { data, error } = await (supabase as any)
-    .from("organizers")
-    .select("id, status")
-    .eq("profile_id", userId)
-    .single();
-  if (error || !data) throw new Error("Organizer profile not found");
-  if ((data as any).status !== "active") throw new Error("Organizer account is not active");
-  return data as { id: string };
-}
-
-async function assertTrekOwnership(
-  supabase: Awaited<ReturnType<typeof createClient>>,
-  trekId: string,
-  organizerId: string,
-): Promise<void> {
-  const { data, error } = await (supabase as any)
-    .from("treks")
-    .select("id")
-    .eq("id", trekId)
-    .eq("organizer_id", organizerId)
-    .single();
-  if (error || !data) throw new Error("Trek not found or access denied");
-}
-
-async function assertEventOwnership(
-  supabase: Awaited<ReturnType<typeof createClient>>,
-  eventId: string,
-  organizerId: string,
-): Promise<void> {
-  const { data, error } = await (supabase as any)
-    .from("trek_events")
-    .select("trek_id, treks!inner(organizer_id)")
-    .eq("id", eventId)
-    .single();
-  if (error || !data) throw new Error("Event not found");
-
-  const treks = (data as any).treks;
-  const organizer_id = Array.isArray(treks)
-    ? treks[0]?.organizer_id
-    : treks?.organizer_id;
-
-  if (organizer_id !== organizerId) throw new Error("Access denied");
-}
 
 // ─── createEvent ──────────────────────────────────────────────────────────────
 
@@ -81,34 +23,37 @@ export async function createEvent(
   data: CreateEventData,
 ): Promise<{ success: true; eventId: string } | { error: string }> {
   try {
-    const { supabase, user } = await getAuthenticatedUser();
-    const organizer = await getOrganizerForUser(supabase, user.id);
-    await assertTrekOwnership(supabase, trekId, organizer.id);
+    const { supabase, organizerId } = await requireOrganizer();
+
+    // Verify trek ownership
+    const { data: trek } = await (supabase as any)
+      .from("treks")
+      .select("id")
+      .eq("id", trekId)
+      .eq("organizer_id", organizerId)
+      .single();
+    if (!trek) return { error: "Trek not found or access denied" };
 
     if (!data.event_date) return { error: "Event date is required." };
     if (!data.price || data.price <= 0) return { error: "Price must be greater than zero." };
     if (!data.total_seats || data.total_seats <= 0) return { error: "Total seats must be greater than zero." };
 
+    const eventRepo = new TrekEventRepository(supabase);
     const endDate = data.end_date ?? data.event_date;
 
-    const { data: inserted, error } = await (supabase as any)
-      .from("trek_events")
-      .insert({
-        trek_id: trekId,
-        event_date: data.event_date,
-        end_date: endDate,
-        reporting_time: data.reporting_time ?? "06:00",
-        price: data.price,
-        child_price: data.child_price ?? null,
-        total_seats: data.total_seats,
-        booked_seats: 0,
-        status: "upcoming",
-      })
-      .select("id")
-      .single();
+    const inserted = await eventRepo.create({
+      trek_id: trekId,
+      event_date: data.event_date,
+      end_date: endDate,
+      reporting_time: data.reporting_time ?? "06:00",
+      price: data.price,
+      child_price: data.child_price ?? null,
+      total_seats: data.total_seats,
+      booked_seats: 0,
+      status: "upcoming",
+    } as any);
 
-    if (error) return { error: error.message };
-    return { success: true, eventId: (inserted as { id: string }).id };
+    return { success: true, eventId: inserted.id };
   } catch (err) {
     return { error: err instanceof Error ? err.message : "Failed to create event." };
   }
@@ -120,22 +65,16 @@ export type ScheduleType = "single" | "weekly" | "biweekly" | "monthly" | "custo
 
 export interface BatchEventData {
   schedule_type: ScheduleType;
-  // For single
   event_date?: string;
-  // For weekly / biweekly
-  day_of_week?: number; // 0=Sunday, 1=Monday, ..., 6=Saturday
+  day_of_week?: number;
   start_date?: string;
   end_date_range?: string;
-  // For monthly
-  day_of_month?: number; // 1-28
-  // For custom
+  day_of_month?: number;
   custom_dates?: string[];
-  // Common
   reporting_time: string;
   price: number;
   child_price?: number;
   total_seats: number;
-  // For multi-day treks
   duration_days?: number;
 }
 
@@ -151,14 +90,10 @@ function generateDates(data: BatchEventData): string[] {
     const start = new Date(data.start_date);
     const end = new Date(data.end_date_range);
     const step = data.schedule_type === "biweekly" ? 14 : 7;
-
-    // Find the first occurrence of the target day
     const current = new Date(start);
-    const targetDay = data.day_of_week;
-    while (current.getDay() !== targetDay) {
+    while (current.getDay() !== data.day_of_week) {
       current.setDate(current.getDate() + 1);
     }
-
     while (current <= end) {
       dates.push(current.toISOString().split("T")[0]);
       current.setDate(current.getDate() + step);
@@ -168,17 +103,14 @@ function generateDates(data: BatchEventData): string[] {
     const start = new Date(data.start_date);
     const end = new Date(data.end_date_range);
     const targetDay = Math.min(data.day_of_month, 28);
-
     const current = new Date(start.getFullYear(), start.getMonth(), targetDay);
     if (current < start) current.setMonth(current.getMonth() + 1);
-
     while (current <= end) {
       dates.push(current.toISOString().split("T")[0]);
       current.setMonth(current.getMonth() + 1);
     }
   }
 
-  // Filter out past dates
   const today = new Date().toISOString().split("T")[0];
   return dates.filter((d) => d >= today).sort();
 }
@@ -188,9 +120,16 @@ export async function createBatchEvents(
   data: BatchEventData,
 ): Promise<{ success: true; count: number } | { error: string }> {
   try {
-    const { supabase, user } = await getAuthenticatedUser();
-    const organizer = await getOrganizerForUser(supabase, user.id);
-    await assertTrekOwnership(supabase, trekId, organizer.id);
+    const { supabase, organizerId } = await requireOrganizer();
+
+    // Verify trek ownership
+    const { data: trek } = await (supabase as any)
+      .from("treks")
+      .select("id")
+      .eq("id", trekId)
+      .eq("organizer_id", organizerId)
+      .single();
+    if (!trek) return { error: "Trek not found or access denied" };
 
     if (!data.price || data.price <= 0) return { error: "Price must be greater than zero." };
     if (!data.total_seats || data.total_seats <= 0) return { error: "Total seats must be greater than zero." };
@@ -201,11 +140,12 @@ export async function createBatchEvents(
     if (dates.length > 52) return { error: "Cannot create more than 52 events at once." };
 
     const durationDays = data.duration_days ?? 1;
+    const eventRepo = new TrekEventRepository(supabase);
+    const pickupRepo = new PickupPointRepository(supabase);
 
     const rows = dates.map((eventDate) => {
       const endDate = new Date(eventDate);
       endDate.setDate(endDate.getDate() + durationDays - 1);
-
       return {
         trek_id: trekId,
         event_date: eventDate,
@@ -219,11 +159,7 @@ export async function createBatchEvents(
       };
     });
 
-    const { data: insertedEvents, error } = await (supabase as any)
-      .from("trek_events")
-      .insert(rows)
-      .select("id");
-    if (error) return { error: error.message };
+    const insertedEvents = await eventRepo.createBatch(rows as any[]);
 
     // Auto-copy default pickup points from the trek to each new event
     const { data: trekData } = await (supabase as any)
@@ -240,8 +176,8 @@ export async function createBatchEvents(
       extra_charge?: number;
     }>;
 
-    if (defaultPickups.length > 0 && insertedEvents) {
-      const pickupRows = (insertedEvents as Array<{ id: string }>).flatMap((event) =>
+    if (defaultPickups.length > 0 && insertedEvents.length > 0) {
+      const pickupRows = insertedEvents.flatMap((event) =>
         defaultPickups.map((p, i) => ({
           trek_event_id: event.id,
           label: p.label,
@@ -278,9 +214,19 @@ export async function updateEvent(
   data: UpdateEventData,
 ): Promise<{ success: true } | { error: string }> {
   try {
-    const { supabase, user } = await getAuthenticatedUser();
-    const organizer = await getOrganizerForUser(supabase, user.id);
-    await assertEventOwnership(supabase, eventId, organizer.id);
+    const { supabase, organizerId } = await requireOrganizer();
+
+    // Verify event ownership via trek
+    const { data: eventRow } = await (supabase as any)
+      .from("trek_events")
+      .select("trek_id, treks!inner(organizer_id)")
+      .eq("id", eventId)
+      .single();
+    if (!eventRow) return { error: "Event not found" };
+
+    const treks = (eventRow as any).treks;
+    const orgId = Array.isArray(treks) ? treks[0]?.organizer_id : treks?.organizer_id;
+    if (orgId !== organizerId) return { error: "Access denied" };
 
     const updates: Record<string, unknown> = {};
     if (data.event_date !== undefined) updates.event_date = data.event_date;
@@ -297,11 +243,8 @@ export async function updateEvent(
 
     if (Object.keys(updates).length === 0) return { error: "No fields to update." };
 
-    const { error } = await (supabase as any)
-      .from("trek_events")
-      .update(updates)
-      .eq("id", eventId);
-    if (error) return { error: error.message };
+    const eventRepo = new TrekEventRepository(supabase);
+    await eventRepo.update(eventId, eventRow.trek_id, updates);
 
     return { success: true };
   } catch (err) {
@@ -315,9 +258,19 @@ export async function cancelEvent(
   eventId: string,
 ): Promise<{ success: true } | { error: string }> {
   try {
-    const { supabase, user } = await getAuthenticatedUser();
-    const organizer = await getOrganizerForUser(supabase, user.id);
-    await assertEventOwnership(supabase, eventId, organizer.id);
+    const { supabase, organizerId } = await requireOrganizer();
+
+    // Verify event ownership via trek
+    const { data: eventRow } = await (supabase as any)
+      .from("trek_events")
+      .select("trek_id, treks!inner(organizer_id)")
+      .eq("id", eventId)
+      .single();
+    if (!eventRow) return { error: "Event not found" };
+
+    const treks = (eventRow as any).treks;
+    const orgId = Array.isArray(treks) ? treks[0]?.organizer_id : treks?.organizer_id;
+    if (orgId !== organizerId) return { error: "Access denied" };
 
     // Cancel all confirmed bookings for this event
     const { data: confirmedBookings } = await (supabase as any)
@@ -337,12 +290,9 @@ export async function cancelEvent(
       if (bookingError) return { error: bookingError.message };
     }
 
-    const { error } = await (supabase as any)
-      .from("trek_events")
-      .update({ status: "cancelled" })
-      .eq("id", eventId);
+    const eventRepo = new TrekEventRepository(supabase);
+    await eventRepo.delete(eventId, eventRow.trek_id);
 
-    if (error) return { error: error.message };
     return { success: true };
   } catch (err) {
     return { error: err instanceof Error ? err.message : "Failed to cancel event." };
@@ -361,21 +311,10 @@ export async function getEventsByTrek(trekId: string): Promise<{
 }> {
   try {
     const supabase = await createClient();
+    const eventRepo = new TrekEventRepository(supabase);
 
-    const { data, error } = await (supabase as any)
-      .from("trek_events")
-      .select(
-        `
-        *,
-        pickup_points(id, label, pickup_time, sort_order)
-        `,
-      )
-      .eq("trek_id", trekId)
-      .order("event_date", { ascending: true });
-
-    if (error) return { data: [], error: error.message };
-
-    return { data: (data ?? []) as EventWithPickups[] };
+    const data = await eventRepo.findByTrekId(trekId);
+    return { data: data as unknown as EventWithPickups[] };
   } catch (err) {
     return {
       data: [],

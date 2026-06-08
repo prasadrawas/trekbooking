@@ -1,26 +1,27 @@
-import { NextRequest, NextResponse } from "next/server";
+import { NextRequest } from "next/server";
 import { createClient } from "@/lib/supabase/server";
+import { withErrorHandling, jsonOk, jsonError } from "@/lib/api-utils";
 
-export async function POST(request: NextRequest) {
+export const POST = withErrorHandling(async (request: NextRequest) => {
   const body = await request.json();
   const { email, password, redirect } = body;
 
   // Validation
   if (!email || typeof email !== "string") {
-    return NextResponse.json({ error: "Email is required." }, { status: 400 });
+    return jsonError("Email is required.", 400);
   }
   if (!password || typeof password !== "string") {
-    return NextResponse.json({ error: "Password is required." }, { status: 400 });
+    return jsonError("Password is required.", 400);
   }
   if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
-    return NextResponse.json({ error: "Invalid email format." }, { status: 400 });
+    return jsonError("Invalid email format.", 400);
   }
 
   const supabase = await createClient();
   const { error, data } = await supabase.auth.signInWithPassword({ email, password });
 
   if (error) {
-    return NextResponse.json({ error: error.message }, { status: 401 });
+    return jsonError(error.message, 401);
   }
 
   // Determine redirect URL
@@ -34,7 +35,7 @@ export async function POST(request: NextRequest) {
     redirectTo = "/org";
   }
 
-  return NextResponse.json({
+  return jsonOk({
     success: true,
     redirectTo,
     user: {
@@ -44,4 +45,4 @@ export async function POST(request: NextRequest) {
       full_name: data.user?.user_metadata?.full_name,
     },
   });
-}
+});

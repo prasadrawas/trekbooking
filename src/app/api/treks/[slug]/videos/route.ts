@@ -1,37 +1,18 @@
-import { NextRequest, NextResponse } from "next/server";
-import { createClient } from "@/lib/supabase/server";
+import { withErrorHandling, jsonOk, jsonError } from "@/lib/api-utils";
+import { createAdminClient } from "@/lib/supabase/admin";
+import { VideoRepository } from "@/lib/repositories";
 
 // GET /api/treks/:slug/videos — List videos for trek (public)
-export async function GET(
-  _request: NextRequest,
-  { params }: { params: Promise<{ slug: string }> }
-) {
+export const GET = withErrorHandling(async (_request, { params }) => {
   const { slug } = await params;
-  const supabase = await createClient();
+  const adminClient = createAdminClient();
+  const repo = new VideoRepository(adminClient);
 
-  // Resolve trek by slug
-  const { data: trek } = await (supabase as any)
-    .from("treks")
-    .select("id")
-    .eq("slug", slug)
-    .single();
+  const trek = await repo.findTrekIdBySlug(slug);
+  if (!trek) return jsonError("Trek not found", 404);
 
-  if (!trek) {
-    return NextResponse.json({ error: "Trek not found" }, { status: 404 });
-  }
-
-  const { data: videos, error } = await (supabase as any)
-    .from("trekker_videos")
-    .select("id, title, youtube_url, sort_order, created_at")
-    .eq("trek_id", trek.id)
-    .eq("is_published", true)
-    .order("sort_order", { ascending: true });
-
-  if (error) {
-    return NextResponse.json({ error: error.message }, { status: 500 });
-  }
-
-  return NextResponse.json({ videos: videos ?? [] }, {
-    headers: { 'Cache-Control': 'public, s-maxage=120, stale-while-revalidate=600' },
+  const videos = await repo.findByTrekId(trek.id);
+  return jsonOk({ videos }, 200, {
+    "Cache-Control": "public, s-maxage=120, stale-while-revalidate=600",
   });
-}
+});

@@ -1,25 +1,15 @@
 "use server";
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
+import { requireAuth } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
+import { VideoRepository } from "@/lib/repositories";
 import type { TrekkerVideo } from "@/types/database";
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
-async function getAuthenticatedUser() {
-  const supabase = await createClient();
-  const {
-    data: { user },
-    error,
-  } = await supabase.auth.getUser();
-  if (error || !user) throw new Error("Not authenticated");
-  return { supabase, user };
-}
-
 /**
  * Extract YouTube video ID from various YouTube URL formats.
- * Supports: youtu.be/ID, youtube.com/watch?v=ID, youtube.com/shorts/ID,
- *           youtube.com/embed/ID
  */
 function extractYouTubeId(url: string): string | null {
   try {
@@ -27,10 +17,7 @@ function extractYouTubeId(url: string): string | null {
     if (parsed.hostname === "youtu.be") {
       return parsed.pathname.slice(1).split("?")[0] || null;
     }
-    if (
-      parsed.hostname === "www.youtube.com" ||
-      parsed.hostname === "youtube.com"
-    ) {
+    if (parsed.hostname === "www.youtube.com" || parsed.hostname === "youtube.com") {
       if (parsed.pathname.startsWith("/shorts/")) {
         return parsed.pathname.split("/shorts/")[1]?.split("?")[0] || null;
       }
@@ -57,7 +44,8 @@ export async function addVideo(
   data: AddVideoData,
 ): Promise<{ success: true; videoId: string } | { error: string }> {
   try {
-    const { supabase, user } = await getAuthenticatedUser();
+    const { supabase, user } = await requireAuth();
+    const videoRepo = new VideoRepository(supabase);
 
     if (!data.youtube_url?.trim()) return { error: "YouTube URL is required." };
 
@@ -80,20 +68,14 @@ export async function addVideo(
       return { error: "You must have completed this trek to add a video." };
     }
 
-    const { data: inserted, error } = await (supabase as any)
-      .from("trekker_videos")
-      .insert({
-        trek_id: data.trek_id,
-        trekker_id: user.id,
-        youtube_url: data.youtube_url.trim(),
-        title: data.title?.trim() ?? null,
-        is_published: false,
-      })
-      .select("id")
-      .single();
+    const video = await videoRepo.create({
+      trekker_id: user.id,
+      youtube_url: data.youtube_url.trim(),
+      trek_id: data.trek_id,
+      title: data.title?.trim() ?? null,
+    });
 
-    if (error) return { error: error.message };
-    return { success: true, videoId: (inserted as { id: string }).id };
+    return { success: true, videoId: (video as any).id };
   } catch (err) {
     return { error: err instanceof Error ? err.message : "Failed to add video." };
   }
@@ -111,18 +93,8 @@ export async function updateVideo(
   data: UpdateVideoData,
 ): Promise<{ success: true } | { error: string }> {
   try {
-    const { supabase, user } = await getAuthenticatedUser();
-
-    // Verify video belongs to user
-    const { data: videoRaw, error: fetchError } = await (supabase as any)
-      .from("trekker_videos")
-      .select("id, trekker_id")
-      .eq("id", videoId)
-      .single();
-
-    if (fetchError || !videoRaw) return { error: "Video not found." };
-    const video = videoRaw as { id: string; trekker_id: string };
-    if (video.trekker_id !== user.id) return { error: "Access denied." };
+    const { supabase, user } = await requireAuth();
+    const videoRepo = new VideoRepository(supabase);
 
     const updates: Record<string, unknown> = {};
 
@@ -139,12 +111,7 @@ export async function updateVideo(
 
     if (Object.keys(updates).length === 0) return { error: "No fields to update." };
 
-    const { error } = await (supabase as any)
-      .from("trekker_videos")
-      .update(updates)
-      .eq("id", videoId);
-    if (error) return { error: error.message };
-
+    await videoRepo.update(videoId, user.id, updates);
     return { success: true };
   } catch (err) {
     return { error: err instanceof Error ? err.message : "Failed to update video." };
@@ -157,25 +124,10 @@ export async function deleteVideo(
   videoId: string,
 ): Promise<{ success: true } | { error: string }> {
   try {
-    const { supabase, user } = await getAuthenticatedUser();
+    const { supabase, user } = await requireAuth();
+    const videoRepo = new VideoRepository(supabase);
 
-    // Verify video belongs to user
-    const { data: videoRaw, error: fetchError } = await (supabase as any)
-      .from("trekker_videos")
-      .select("id, trekker_id")
-      .eq("id", videoId)
-      .single();
-
-    if (fetchError || !videoRaw) return { error: "Video not found." };
-    const video = videoRaw as { id: string; trekker_id: string };
-    if (video.trekker_id !== user.id) return { error: "Access denied." };
-
-    const { error } = await (supabase as any)
-      .from("trekker_videos")
-      .delete()
-      .eq("id", videoId);
-    if (error) return { error: error.message };
-
+    await videoRepo.delete(videoId, user.id);
     return { success: true };
   } catch (err) {
     return { error: err instanceof Error ? err.message : "Failed to delete video." };
@@ -194,17 +146,12 @@ export async function getTrekkerVideos(): Promise<{
   error?: string;
 }> {
   try {
-    const { supabase, user } = await getAuthenticatedUser();
+    const { supabase, user } = await requireAuth();
+    const videoRepo = new VideoRepository(supabase);
 
-    const { data, error } = await (supabase as any)
-      .from("trekker_videos")
-      .select("*, treks(title, slug)")
-      .eq("trekker_id", user.id)
-      .order("created_at", { ascending: false });
+    const data = await videoRepo.findByTrekkerId(user.id);
 
-    if (error) return { data: [], error: error.message };
-
-    const result: TrekkerVideoItem[] = ((data as any[]) ?? []).map((v: any) => {
+    const result: TrekkerVideoItem[] = (data as any[]).map((v: any) => {
       const trek = Array.isArray(v.treks) ? v.treks[0] : v.treks;
       return {
         ...v,
@@ -234,17 +181,20 @@ export async function getVideosByTrek(trekId: string): Promise<{
 }> {
   try {
     const supabase = await createClient();
+    const videoRepo = new VideoRepository(supabase);
 
-    const { data, error } = await (supabase as any)
+    const data = await videoRepo.findByTrekId(trekId);
+
+    // The repo returns published videos but without user names,
+    // so we need a slightly different query for the public view
+    const { data: publicData } = await (supabase as any)
       .from("trekker_videos")
       .select("*, profiles(full_name)")
       .eq("trek_id", trekId)
       .eq("is_published", true)
       .order("created_at", { ascending: false });
 
-    if (error) return { data: [], error: error.message };
-
-    const result: PublicVideoItem[] = ((data as any[]) ?? []).map((v: any) => {
+    const result: PublicVideoItem[] = ((publicData as any[]) ?? []).map((v: any) => {
       const profile = Array.isArray(v.profiles) ? v.profiles[0] : v.profiles;
       return {
         ...v,
