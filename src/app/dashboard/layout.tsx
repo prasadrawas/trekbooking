@@ -79,7 +79,7 @@ export default function DashboardLayout({
       <div className="hidden lg:flex lg:w-[280px] lg:flex-shrink-0 lg:flex-col">
         <div className="flex flex-col h-full border-r border-slate-100 bg-white">
           {/* Logo */}
-          <div className="flex items-center gap-2.5 px-5 py-4 border-b border-slate-100">
+          <div className="flex items-center gap-2.5 px-5 h-14 border-b border-slate-100">
             <div className="flex items-center justify-center w-8 h-8 rounded-lg bg-emerald-600">
               <Mountain className="w-4.5 h-4.5 text-white" strokeWidth={2} />
             </div>
@@ -110,7 +110,7 @@ export default function DashboardLayout({
               transition={{ type: "spring", stiffness: 400, damping: 40 }}
               className="fixed left-0 top-0 z-50 h-full w-[280px] bg-white shadow-2xl lg:hidden"
             >
-              <div className="flex items-center justify-between px-5 py-4 border-b border-slate-100">
+              <div className="flex items-center justify-between px-5 h-14 border-b border-slate-100">
                 <div className="flex items-center gap-2.5">
                   <div className="flex items-center justify-center w-8 h-8 rounded-lg bg-emerald-600">
                     <Mountain className="w-4.5 h-4.5 text-white" strokeWidth={2} />
