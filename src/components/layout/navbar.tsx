@@ -23,24 +23,19 @@ interface AuthUser {
 export function Navbar() {
   const router = useRouter();
   const pathname = usePathname();
-  // Pages with dark/image hero sections — navbar starts transparent to blend
-  const isHeroPage = pathname === "/" || pathname === "/treks" || pathname === "/about" || pathname === "/partner" || pathname === "/contact" || /^\/treks\/[^/]+$/.test(pathname) || /^\/organizers\/[^/]+$/.test(pathname);
-  const [scrolled, setScrolled] = useState(!isHeroPage);
+  // Navbar is always transparent, transitions to white on scroll
+  const [scrolled, setScrolled] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
   const [userMenuOpen, setUserMenuOpen] = useState(false);
   const [user, setUser] = useState<AuthUser | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    if (!isHeroPage) {
-      setScrolled(true);
-      return;
-    }
     const handleScroll = () => setScrolled(window.scrollY > 16);
     handleScroll();
     window.addEventListener("scroll", handleScroll, { passive: true });
     return () => window.removeEventListener("scroll", handleScroll);
-  }, [isHeroPage]);
+  }, []);
 
   useEffect(() => {
     document.body.style.overflow = mobileOpen ? "hidden" : "";
