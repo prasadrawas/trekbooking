@@ -22,7 +22,11 @@ export const GET = withErrorHandling(async (_request, { params }) => {
     ? await eventRepo.findByTrekId(trek.id)
     : await eventRepo.findUpcoming(trek.id);
 
-  return jsonOk({ events });
+  const cacheHeaders = !isOwner
+    ? { "Cache-Control": "public, s-maxage=60, stale-while-revalidate=300" }
+    : undefined;
+
+  return jsonOk({ events }, 200, cacheHeaders);
 });
 
 // POST /api/treks/:slug/events — Create event (auth: owner organizer)

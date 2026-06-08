@@ -2,7 +2,7 @@ export interface MappedTrek {
   title: string;
   slug: string;
   cover_image: string | null;
-  difficulty: string;
+  difficulty: "easy" | "moderate" | "difficult" | "very_difficult";
   duration: number;
   distance: number;
   price: number;
@@ -28,7 +28,7 @@ export function mapApiTrek(t: any): MappedTrek {
     title: String(t.title ?? ""),
     slug: String(t.slug ?? ""),
     cover_image: coverImg,
-    difficulty: String(t.difficulty ?? "moderate"),
+    difficulty: (t.difficulty ?? "moderate") as MappedTrek["difficulty"],
     duration: Number(t.duration_days ?? 1),
     distance: Number(t.distance_km ?? 0),
     price: Number(t.next_event?.price ?? t.default_adult_price ?? 0),

@@ -1,16 +1,16 @@
 "use client"
 
-import { useState, useMemo, useEffect, useCallback, Suspense } from "react"
+import { useState, Suspense } from "react"
 import { useSearchParams, useRouter } from "next/navigation"
 import { motion, AnimatePresence } from "framer-motion"
 import { SlidersHorizontal, Mountain, X } from "lucide-react"
 import { TrekCard } from "@/components/trek/trek-card"
-import { mapApiTrek } from "@/lib/trek-mapper"
 import { TrekFilters } from "@/components/trek/trek-filters"
 import { SearchBar } from "@/components/shared/search-bar"
 import { Pagination } from "@/components/shared/pagination"
 import { EmptyState } from "@/components/shared/empty-state"
 import { Skeleton } from "@/components/ui/skeleton"
+import { useTreks } from "@/hooks/use-treks"
 
 // ---------------------------------------------------------------------------
 // Mock data — 6 realistic Sahyadri treks
@@ -170,73 +170,13 @@ const itemVariants = {
 function TreksPageContent() {
   const searchParams = useSearchParams()
   const router = useRouter()
-  const [isLoading, setIsLoading] = useState(true)
-  const [treks, setTreks] = useState(MOCK_TREKS)
-  const [isMock, setIsMock] = useState(true)
+  const { treks, total: totalCount, isLoading } = useTreks(searchParams)
   const [currentPage, setCurrentPage] = useState(1)
   const [showFilterDrawer, setShowFilterDrawer] = useState(false)
-  const [totalCount, setTotalCount] = useState(0)
 
-  // Build API URL from search params — forward all filter params
-  const apiUrl = useMemo(() => {
-    const params = new URLSearchParams()
-
-    // Text search
-    const q = searchParams.get("q")
-    if (q) params.set("q", q)
-
-    // Multi-value filters
-    searchParams.getAll("region").forEach((r) => params.append("region", r))
-    searchParams.getAll("difficulty").forEach((d) => params.append("difficulty", d))
-    searchParams.getAll("duration").forEach((d) => params.append("duration", d))
-
-    // Single-value filters
-    const childFriendly = searchParams.get("child_friendly") || searchParams.get("childFriendly")
-    if (childFriendly) params.set("child_friendly", childFriendly)
-
-    const priceMin = searchParams.get("price_min")
-    const priceMax = searchParams.get("price_max")
-    if (priceMin) params.set("price_min", priceMin)
-    if (priceMax) params.set("price_max", priceMax)
-
-    const sort = searchParams.get("sort")
-    if (sort) params.set("sort", sort)
-
-    const page = searchParams.get("page")
-    if (page) params.set("page", page)
-
-    params.set("limit", "12")
-
-    return `/api/treks?${params.toString()}`
-  }, [searchParams])
-
-  // Map API response to card format — delegates to shared mapApiTrek
-  const mapTrek = useCallback(mapApiTrek, [])
-
-  // Fetch treks when URL params change
-  useEffect(() => {
-    setIsLoading(true)
-    fetch(apiUrl)
-      .then((res) => res.ok ? res.json() : null)
-      .then((data) => {
-        if (data?.treks?.length > 0) {
-          setTreks(data.treks.map(mapTrek))
-          setTotalCount(data.total ?? data.treks.length)
-          setIsMock(false)
-        } else if (data?.treks?.length === 0 && !isMock) {
-          // Real search returned 0 results — show empty, not mock
-          setTreks([])
-          setTotalCount(0)
-          setIsMock(false)
-        }
-      })
-      .catch(() => {})
-      .finally(() => setIsLoading(false))
-  }, [apiUrl, mapTrek]) // eslint-disable-line react-hooks/exhaustive-deps
-
-  const filtered = treks
-  const totalPages = Math.ceil((isMock ? filtered.length : totalCount) / ITEMS_PER_PAGE)
-  const paginated = filtered.slice(
+  const displayTreks = treks.length > 0 ? treks : (isLoading ? [] : [])
+  const totalPages = Math.ceil(totalCount / ITEMS_PER_PAGE)
+  const paginated = displayTreks.slice(
     (currentPage - 1) * ITEMS_PER_PAGE,
     currentPage * ITEMS_PER_PAGE
   )
@@ -261,7 +201,7 @@ function TreksPageContent() {
           <div className="inline-flex items-center gap-2 bg-emerald-600/40 border border-emerald-400/30 rounded-full px-4 py-1.5 mb-4">
             <Mountain className="w-4 h-4 text-emerald-200" />
             <span className="text-emerald-100 text-sm font-medium">
-              {filtered.length} treks listed
+              {displayTreks.length} treks listed
             </span>
           </div>
           <h1 className="text-4xl md:text-5xl font-bold text-white mb-3 tracking-tight">
@@ -300,8 +240,7 @@ function TreksPageContent() {
             {/* Toolbar row */}
             <div className="flex items-center justify-between mb-6">
               <p className="text-sm text-gray-600">
-                <span className="font-semibold text-gray-900">{filtered.length}</span> treks found
-                {isMock && <span className="ml-2 text-xs text-amber-500">(Sample data)</span>}
+                <span className="font-semibold text-gray-900">{displayTreks.length}</span> treks found
               </p>
 
               {/* Mobile filter toggle */}

@@ -16,7 +16,9 @@ export const GET = withErrorHandling(async (_request, { params }) => {
   const event = await eventRepo.findByIdAndTrekId(eventId, trekId);
   if (!event) return jsonError("Event not found", 404);
 
-  return jsonOk({ event });
+  return jsonOk({ event }, 200, {
+    "Cache-Control": "public, s-maxage=60, stale-while-revalidate=300",
+  });
 });
 
 // PUT /api/treks/:slug/events/:eventId — Update event (auth: owner)

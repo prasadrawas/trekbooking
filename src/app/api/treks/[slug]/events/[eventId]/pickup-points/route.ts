@@ -16,7 +16,9 @@ export const GET = withErrorHandling(async (_request, { params }) => {
   if (!event) return jsonError("Event not found", 404);
 
   const pickupPoints = await repo.findByEventId(eventId);
-  return jsonOk({ pickup_points: pickupPoints });
+  return jsonOk({ pickup_points: pickupPoints }, 200, {
+    "Cache-Control": "public, s-maxage=60, stale-while-revalidate=300",
+  });
 });
 
 // POST /api/treks/:slug/events/:eventId/pickup-points — Add pickup point (auth: owner)

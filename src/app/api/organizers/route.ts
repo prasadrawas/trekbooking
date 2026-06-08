@@ -14,7 +14,9 @@ export const GET = withErrorHandling(async (request) => {
   const repo = new OrganizerRepository(adminClient);
   const result = await repo.findActive({ page, limit });
 
-  return jsonOk(result);
+  return jsonOk(result, 200, {
+    "Cache-Control": "public, s-maxage=120, stale-while-revalidate=600",
+  });
 });
 
 // POST /api/organizers — Create organizer profile (auth: role=organizer)

@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useMemo } from "react"
 import Link from "next/link"
 import Image from "next/image"
 import { useParams } from "next/navigation"
@@ -29,6 +29,7 @@ import { RatingStars } from "@/components/shared/rating-stars"
 import { SeatBadge } from "@/components/shared/seat-badge"
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs"
 import { mapApiTrek } from "@/lib/trek-mapper"
+import { useTrekDetail } from "@/hooks/use-trek-detail"
 
 // ---------------------------------------------------------------------------
 // Mock trek data — Rajgad Fort Trek (used as fallback when API is unavailable)
@@ -316,139 +317,121 @@ export default function TrekDetailPage() {
   const params = useParams()
   const slug = params?.slug as string
 
-  const [loading, setLoading] = useState(true)
-  const [trek, setTrek] = useState<typeof MOCK_TREK>(MOCK_TREK)
-  const [isMock, setIsMock] = useState(false)
   const [showAllPhotos, setShowAllPhotos] = useState(false)
   const [showAllDates, setShowAllDates] = useState(false)
-  const [similarTreks, setSimilarTreks] = useState(SIMILAR_TREKS)
 
-  useEffect(() => {
-    if (!slug) return
-    setLoading(true)
-    Promise.all([
-      fetch(`/api/treks/${slug}`).then((r) => r.ok ? r.json() : null),
-      fetch(`/api/treks/${slug}/reviews`).then((r) => r.ok ? r.json() : null),
-      fetch(`/api/treks?limit=3`).then((r) => r.ok ? r.json() : null),
-    ]).then(([data, reviewData, similarData]) => {
-      if (!data?.trek) throw new Error("Trek not found")
-      const t = data.trek
-      const pickupSource =
-        t.default_pickup_points?.length
-          ? t.default_pickup_points
-          : t.trek_events?.[0]?.pickup_points ?? []
+  const { trek: rawTrek, reviews: rawReviews, similarTreks: rawSimilar, isLoading: loading } = useTrekDetail(slug)
 
-      const mapped: typeof MOCK_TREK = {
-        title: t.title,
-        slug: t.slug,
-        difficulty: t.difficulty,
-        duration: t.duration_days,
-        distance: t.distance_km,
-        elevation: t.elevation_m,
-        region: t.region ?? MOCK_TREK.region,
-        is_child_friendly: t.is_child_friendly ?? false,
+  // Map API response to page shape — memoized so it doesn't re-run on every render
+  const trek = useMemo(() => {
+    if (!rawTrek) return MOCK_TREK
+    const t = rawTrek
+    const pickupSource =
+      t.default_pickup_points?.length
+        ? t.default_pickup_points
+        : t.trek_events?.[0]?.pickup_points ?? []
+
+    const mapped: typeof MOCK_TREK = {
+      title: t.title,
+      slug: t.slug,
+      difficulty: t.difficulty,
+      duration: t.duration_days,
+      distance: t.distance_km,
+      elevation: t.elevation_m,
+      region: t.region ?? MOCK_TREK.region,
+      is_child_friendly: t.is_child_friendly ?? false,
+      rating: t.organizers?.avg_rating ?? 0,
+      total_reviews: 0,
+      organizer: {
+        slug: t.organizers?.slug ?? MOCK_TREK.organizer.slug,
+        name: t.organizers?.org_name ?? MOCK_TREK.organizer.name,
+        verified: t.organizers?.is_verified ?? false,
         rating: t.organizers?.avg_rating ?? 0,
-        total_reviews: 0,
-        organizer: {
-          slug: t.organizers?.slug ?? MOCK_TREK.organizer.slug,
-          name: t.organizers?.org_name ?? MOCK_TREK.organizer.name,
-          verified: t.organizers?.is_verified ?? false,
-          rating: t.organizers?.avg_rating ?? 0,
-          total_treks: 0,
-          since: t.organizers?.created_at
-            ? new Date(t.organizers.created_at).getFullYear().toString()
-            : MOCK_TREK.organizer.since,
-        },
-        description: t.description ?? MOCK_TREK.description,
-        inclusions: t.inclusions?.length ? t.inclusions : MOCK_TREK.inclusions,
-        exclusions: t.exclusions?.length ? t.exclusions : MOCK_TREK.exclusions,
-        itinerary: Array.isArray(t.itinerary) ? t.itinerary : [],
-        thingsToCarry: t.things_to_carry?.length
-          ? t.things_to_carry
-          : MOCK_TREK.thingsToCarry,
-        pickupPoints: pickupSource.map(
-          (p: { label: string; pickup_time: string; extra_charge?: number; maps_url?: string }, i: number) => ({
-            id: String(i),
-            name: p.label,
-            time: p.pickup_time,
-            extraCharge: p.extra_charge ?? 0,
-            mapUrl: p.maps_url ?? "#",
-          })
-        ),
-        upcomingDates: (t.trek_events ?? [])
-          .filter((e: { status: string }) => e.status === "upcoming" || e.status === "full")
-          .map((e: {
-            id: string
-            event_date: string
-            reporting_time: string
-            price: number
-            child_price: number
-            total_seats: number
-            booked_seats: number
-          }) => {
-            const d = new Date(e.event_date)
-            return {
-              eventId: e.id,
-              date: d.toLocaleDateString("en-IN", {
-                day: "numeric",
-                month: "short",
-                year: "numeric",
-              }),
-              day: d.toLocaleDateString("en-IN", { weekday: "short" }),
-              reportingTime: e.reporting_time,
-              adultPrice: e.price ?? 0,
-              childPrice: e.child_price ?? null,
-              availableSeats: e.total_seats - e.booked_seats,
-              totalSeats: e.total_seats,
-            }
-          }),
-        reviews: [],
-        ratingBreakdown: { 5: 0, 4: 0, 3: 0, 2: 0, 1: 0 },
-        images: (t.trek_images ?? []).map((img: { id: string; image_url: string; is_cover: boolean }) => ({
-          id: img.id,
-          url: img.image_url,
-          isCover: img.is_cover,
-        })),
-      }
+        total_treks: 0,
+        since: t.organizers?.created_at
+          ? new Date(t.organizers.created_at).getFullYear().toString()
+          : MOCK_TREK.organizer.since,
+      },
+      description: t.description ?? MOCK_TREK.description,
+      inclusions: t.inclusions?.length ? t.inclusions : MOCK_TREK.inclusions,
+      exclusions: t.exclusions?.length ? t.exclusions : MOCK_TREK.exclusions,
+      itinerary: Array.isArray(t.itinerary) ? t.itinerary : [],
+      thingsToCarry: t.things_to_carry?.length
+        ? t.things_to_carry
+        : MOCK_TREK.thingsToCarry,
+      pickupPoints: pickupSource.map(
+        (p: { label: string; pickup_time: string; extra_charge?: number; maps_url?: string }, i: number) => ({
+          id: String(i),
+          name: p.label,
+          time: p.pickup_time,
+          extraCharge: p.extra_charge ?? 0,
+          mapUrl: p.maps_url ?? "#",
+        })
+      ),
+      upcomingDates: (t.trek_events ?? [])
+        .filter((e: { status: string }) => e.status === "upcoming" || e.status === "full")
+        .map((e: {
+          id: string
+          event_date: string
+          reporting_time: string
+          price: number
+          child_price: number
+          total_seats: number
+          booked_seats: number
+        }) => {
+          const d = new Date(e.event_date)
+          return {
+            eventId: e.id,
+            date: d.toLocaleDateString("en-IN", {
+              day: "numeric",
+              month: "short",
+              year: "numeric",
+            }),
+            day: d.toLocaleDateString("en-IN", { weekday: "short" }),
+            reportingTime: e.reporting_time,
+            adultPrice: e.price ?? 0,
+            childPrice: e.child_price ?? null,
+            availableSeats: e.total_seats - e.booked_seats,
+            totalSeats: e.total_seats,
+          }
+        }),
+      reviews: [],
+      ratingBreakdown: { 5: 0, 4: 0, 3: 0, 2: 0, 1: 0 },
+      images: (t.trek_images ?? []).map((img: { id: string; image_url: string; is_cover: boolean }) => ({
+        id: img.id,
+        url: img.image_url,
+        isCover: img.is_cover,
+      })),
+    }
 
-      // Fall back to mock upcoming dates if API returned none
-      if (mapped.upcomingDates.length === 0) {
-        mapped.upcomingDates = MOCK_TREK.upcomingDates
-      }
+    if (mapped.upcomingDates.length === 0) {
+      mapped.upcomingDates = MOCK_TREK.upcomingDates
+    }
 
-      // Process reviews
-      if (reviewData?.reviews?.length > 0) {
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        mapped.reviews = reviewData.reviews.map((rv: any) => ({
-          id: String(rv.id ?? ""),
-          name: rv.reviewer_name ?? rv.profiles?.full_name ?? "Trekker",
-          rating: Number(rv.rating ?? 5),
-          date: rv.created_at
-            ? new Date(rv.created_at).toLocaleDateString("en-IN", { month: "short", year: "numeric" })
-            : "—",
-          text: rv.comment ?? rv.body ?? "",
-          avatar: rv.avatar_url ?? null,
-        }))
-      }
+    // Process reviews
+    if (rawReviews?.length > 0) {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      mapped.reviews = rawReviews.map((rv: any) => ({
+        id: String(rv.id ?? ""),
+        name: rv.reviewer_name ?? rv.profiles?.full_name ?? "Trekker",
+        avatar: rv.avatar_url ?? "",
+        rating: Number(rv.rating ?? 5),
+        date: rv.created_at
+          ? new Date(rv.created_at).toLocaleDateString("en-IN", { month: "short", year: "numeric" })
+          : "—",
+        comment: rv.comment ?? rv.body ?? "",
+      }))
+    }
 
-      setTrek(mapped)
-      setIsMock(false)
+    return mapped
+  }, [rawTrek, rawReviews])
 
-      // Process similar treks
-      if (similarData?.treks) {
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const others = similarData.treks
-          .filter((st: any) => st.slug !== slug)
-          .slice(0, 3)
-          .map(mapApiTrek)
-        if (others.length > 0) setSimilarTreks(others)
-      }
-    }).catch(() => {
-      // Keep MOCK_TREK as fallback
-      setTrek(MOCK_TREK)
-      setIsMock(true)
-    }).finally(() => setLoading(false))
-  }, [slug])
+  const similarTreks = useMemo(() => {
+    if (!rawSimilar?.length) return SIMILAR_TREKS
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const others = rawSimilar.filter((st: any) => st.slug !== slug).slice(0, 3).map(mapApiTrek)
+    return others.length > 0 ? others : SIMILAR_TREKS
+  }, [rawSimilar, slug])
 
   if (loading) {
     return (
@@ -572,11 +555,6 @@ export default function TrekDetailPage() {
               <h1 className="text-3xl md:text-4xl font-bold text-gray-900 mb-2 tracking-tight">
                 {trek.title}
               </h1>
-              {isMock && (
-                <p className="text-xs text-amber-600 bg-amber-50 border border-amber-200 rounded-full inline-block px-2.5 py-0.5 mb-1">
-                  (Sample data)
-                </p>
-              )}
 
               {/* Organizer + rating row */}
               <div className="flex flex-wrap items-center gap-3 text-sm">

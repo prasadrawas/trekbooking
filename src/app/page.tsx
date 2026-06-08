@@ -20,7 +20,7 @@ import {
 } from "lucide-react";
 import { SearchBar } from "@/components/shared/search-bar";
 import { TrekCard } from "@/components/trek/trek-card";
-import { mapApiTrek } from "@/lib/trek-mapper";
+import { useTrendingTreks } from "@/hooks/use-treks";
 
 // ─── Animation helpers ─────────────────────────────────────────────────────
 
@@ -352,18 +352,8 @@ function HeroSection() {
 function TrendingTreksSection() {
   const ref = useRef(null);
   const isInView = useInView(ref, { once: true, margin: "-60px" });
-  const [treks, setTreks] = useState(MOCK_TREKS);
-
-  useEffect(() => {
-    fetch("/api/treks?limit=4")
-      .then((r) => r.ok ? r.json() : null)
-      .then((data) => {
-        if (data?.treks?.length > 0) {
-          setTreks(data.treks.map(mapApiTrek));
-        }
-      })
-      .catch(() => {});
-  }, []);
+  const { treks: fetchedTreks } = useTrendingTreks(4);
+  const treks = fetchedTreks.length > 0 ? fetchedTreks : MOCK_TREKS;
 
   return (
     <section className="py-20 sm:py-28 bg-white" ref={ref}>
