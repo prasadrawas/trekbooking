@@ -49,7 +49,7 @@ export const TrekCard = React.memo(function TrekCard({ trek }: TrekCardProps) {
     : null
 
   return (
-    <Link href={`/treks/${trek.slug}`} prefetch={false} className="block group focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 rounded-2xl">
+    <Link href={`/treks/${trek.slug}`} className="block group focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 rounded-2xl">
       <article className="bg-white rounded-2xl overflow-hidden border border-gray-100 shadow-sm h-full flex flex-col transition-all duration-200 hover:-translate-y-1 hover:shadow-xl">
         {/* Image section */}
         <div className="relative aspect-[4/3] overflow-hidden bg-gradient-to-br from-emerald-100 via-emerald-50 to-teal-100">

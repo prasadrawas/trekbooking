@@ -385,7 +385,6 @@ function TrendingTreksSection() {
           </div>
           <Link
             href="/treks"
-            prefetch={false}
             className="inline-flex items-center gap-1.5 text-sm font-semibold text-emerald-600 hover:text-emerald-700 transition-colors group"
           >
             View All Treks
@@ -864,7 +863,6 @@ function BottomCTASection() {
         <div className="flex flex-wrap gap-3 justify-center">
           <Link
             href="/treks"
-            prefetch={false}
             className="inline-flex items-center gap-2 rounded-xl bg-emerald-600 px-7 py-3.5 text-sm font-bold text-white shadow-md hover:bg-emerald-700 active:scale-95 transition-all duration-150"
           >
             Explore All Treks
