@@ -23,8 +23,8 @@ interface AuthUser {
 export function Navbar() {
   const router = useRouter();
   const pathname = usePathname();
-  // Only trek detail pages get a transparent navbar over the hero gallery
-  const isHeroPage = /^\/treks\/[^/]+$/.test(pathname);
+  // Pages with dark/image hero sections — navbar starts transparent to blend
+  const isHeroPage = pathname === "/" || /^\/treks\/[^/]+$/.test(pathname);
   const [scrolled, setScrolled] = useState(!isHeroPage);
   const [mobileOpen, setMobileOpen] = useState(false);
   const [userMenuOpen, setUserMenuOpen] = useState(false);
@@ -124,17 +124,17 @@ export function Navbar() {
         className={[
           "fixed inset-x-0 top-0 z-50 transition-all duration-300",
           scrolled
-            ? "bg-emerald-700 shadow-md"
+            ? "bg-white/95 backdrop-blur-md shadow-sm border-b border-slate-100"
             : "bg-transparent",
         ].join(" ")}
       >
         <nav className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
           {/* Logo */}
           <Link href="/" className="flex items-center gap-2 group" onClick={() => setMobileOpen(false)}>
-            <span className="flex items-center justify-center rounded-lg p-1 text-white">
+            <span className={["flex items-center justify-center rounded-lg p-1 transition-colors duration-300", scrolled ? "text-emerald-600" : "text-white"].join(" ")}>
               <Mountain className="h-7 w-7 stroke-[1.75]" />
             </span>
-            <span className="text-xl font-bold tracking-tight text-white">
+            <span className={["text-xl font-bold tracking-tight transition-colors duration-300", scrolled ? "text-slate-900" : "text-white"].join(" ")}>
               TrekBooking
             </span>
           </Link>
@@ -145,7 +145,7 @@ export function Navbar() {
               <li key={link.href}>
                 <Link
                   href={link.href}
-                  className="px-4 py-2 rounded-lg text-sm font-medium transition-colors duration-200 text-white/90 hover:text-white hover:bg-white/10"
+                  className={["px-4 py-2 rounded-lg text-sm font-medium transition-colors duration-200", scrolled ? "text-slate-600 hover:text-slate-900 hover:bg-slate-100" : "text-white/90 hover:text-white hover:bg-white/10"].join(" ")}
                 >
                   {link.label}
                 </Link>
@@ -163,9 +163,9 @@ export function Navbar() {
                 <button
                   type="button"
                   onClick={() => setUserMenuOpen((v) => !v)}
-                  className="flex items-center gap-2 rounded-xl px-3 py-1.5 text-sm font-medium transition-colors duration-200 text-white/90 hover:bg-white/10"
+                  className={["flex items-center gap-2 rounded-xl px-3 py-1.5 text-sm font-medium transition-colors duration-200", scrolled ? "text-slate-700 hover:bg-slate-100" : "text-white/90 hover:bg-white/10"].join(" ")}
                 >
-                  <span className="flex h-7 w-7 items-center justify-center rounded-full bg-white text-[11px] font-bold text-emerald-700">
+                  <span className="flex h-7 w-7 items-center justify-center rounded-full bg-emerald-600 text-[11px] font-bold text-white">
                     {initials}
                   </span>
                   <span className="max-w-[120px] truncate">{user.name}</span>
@@ -223,13 +223,13 @@ export function Navbar() {
               <>
                 <Link
                   href="/login"
-                  className="px-4 py-2 rounded-lg text-sm font-medium transition-colors duration-200 text-white/90 hover:text-white hover:bg-white/10"
+                  className={["px-4 py-2 rounded-lg text-sm font-medium transition-colors duration-200", scrolled ? "text-slate-700 hover:text-slate-900 hover:bg-slate-100" : "text-white/90 hover:text-white hover:bg-white/10"].join(" ")}
                 >
                   Login
                 </Link>
                 <Link
                   href="/signup"
-                  className="px-4 py-2 rounded-lg text-sm font-semibold bg-white text-emerald-700 hover:bg-emerald-50 active:scale-95 transition-all duration-150 shadow-sm"
+                  className="px-4 py-2 rounded-lg text-sm font-semibold bg-emerald-600 text-white hover:bg-emerald-700 active:scale-95 transition-all duration-150 shadow-sm"
                 >
                   Sign Up
                 </Link>
@@ -243,7 +243,7 @@ export function Navbar() {
             aria-label={mobileOpen ? "Close menu" : "Open menu"}
             aria-expanded={mobileOpen}
             onClick={() => setMobileOpen((v) => !v)}
-            className="md:hidden flex items-center justify-center rounded-lg p-2 transition-colors duration-200 text-white hover:bg-white/10"
+            className={["md:hidden flex items-center justify-center rounded-lg p-2 transition-colors duration-200", scrolled ? "text-slate-700 hover:bg-slate-100" : "text-white hover:bg-white/10"].join(" ")}
           >
             {mobileOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
           </button>
