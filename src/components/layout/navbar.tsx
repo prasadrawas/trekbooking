@@ -23,8 +23,9 @@ interface AuthUser {
 export function Navbar() {
   const router = useRouter();
   const pathname = usePathname();
-  // Only the landing page (/) has the transparent hero — all other pages start solid
-  const isHeroPage = pathname === "/";
+  // Pages with a full-width hero image get a transparent navbar
+  const isTrekDetail = /^\/treks\/[^/]+$/.test(pathname);
+  const isHeroPage = pathname === "/" || isTrekDetail;
   const [scrolled, setScrolled] = useState(!isHeroPage);
   const [mobileOpen, setMobileOpen] = useState(false);
   const [userMenuOpen, setUserMenuOpen] = useState(false);
