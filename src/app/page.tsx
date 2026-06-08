@@ -898,11 +898,67 @@ function BottomCTASection() {
   );
 }
 
+// ─── JSON-LD structured data ───────────────────────────────────────────────
+
+const ORGANIZATION_SCHEMA = {
+  "@context": "https://schema.org",
+  "@type": "Organization",
+  name: "TrekBooking",
+  url: "https://trekbooking.in",
+  logo: "https://trekbooking.in/logo.png",
+  description:
+    "TrekBooking is India's leading platform for booking verified weekend treks in the Sahyadri mountains near Pune. 400+ trek routes, 120+ organizers, instant online payment.",
+  foundingLocation: {
+    "@type": "Place",
+    name: "Pune, Maharashtra, India",
+  },
+  areaServed: {
+    "@type": "Place",
+    name: "Sahyadri Mountains, Maharashtra, India",
+  },
+  sameAs: [
+    "https://www.instagram.com/trekbooking",
+    "https://www.facebook.com/trekbooking",
+    "https://twitter.com/trekbooking",
+  ],
+  contactPoint: {
+    "@type": "ContactPoint",
+    contactType: "customer support",
+    email: "hello@trekbooking.in",
+    availableLanguage: ["English", "Hindi", "Marathi"],
+  },
+};
+
+const WEBSITE_SCHEMA = {
+  "@context": "https://schema.org",
+  "@type": "WebSite",
+  name: "TrekBooking",
+  url: "https://trekbooking.in",
+  description:
+    "Book verified weekend treks in the Sahyadri mountains near Pune. 400+ routes, instant payment.",
+  potentialAction: {
+    "@type": "SearchAction",
+    target: {
+      "@type": "EntryPoint",
+      urlTemplate: "https://trekbooking.in/treks?q={search_term_string}",
+    },
+    "query-input": "required name=search_term_string",
+  },
+};
+
 // ─── Page root ─────────────────────────────────────────────────────────────
 
 export default function HomePage() {
   return (
     <>
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(ORGANIZATION_SCHEMA) }}
+      />
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(WEBSITE_SCHEMA) }}
+      />
       <HeroSection />
       <TrendingTreksSection />
       <HowItWorksSection />

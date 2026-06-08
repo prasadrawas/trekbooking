@@ -273,6 +273,69 @@ const fadeUp = {
 }
 
 // ---------------------------------------------------------------------------
+// Trek JSON-LD structured data component
+// ---------------------------------------------------------------------------
+function TrekStructuredData({ trek, slug }: { trek: typeof MOCK_TREK; slug: string }) {
+  const nextEvent = trek.upcomingDates[0]
+
+  const structuredData = {
+    "@context": "https://schema.org",
+    "@type": "Event",
+    name: trek.title,
+    description: trek.description.slice(0, 300).replace(/\n/g, " ").trim(),
+    url: `https://trekbooking.in/treks/${slug}`,
+    image: "https://trekbooking.in/og-image.jpg",
+    location: {
+      "@type": "Place",
+      name: trek.region,
+      address: {
+        "@type": "PostalAddress",
+        addressRegion: "Maharashtra",
+        addressCountry: "IN",
+      },
+    },
+    organizer: {
+      "@type": "Organization",
+      name: trek.organizer.name,
+      url: `https://trekbooking.in/organizers/${trek.organizer.slug}`,
+    },
+    ...(nextEvent
+      ? {
+          startDate: nextEvent.date,
+          offers: {
+            "@type": "Offer",
+            price: nextEvent.adultPrice,
+            priceCurrency: "INR",
+            availability:
+              nextEvent.availableSeats > 0
+                ? "https://schema.org/InStock"
+                : "https://schema.org/SoldOut",
+            url: `https://trekbooking.in/treks/${slug}/book/${nextEvent.eventId}`,
+            validFrom: new Date().toISOString(),
+          },
+        }
+      : {}),
+    aggregateRating:
+      trek.total_reviews > 0
+        ? {
+            "@type": "AggregateRating",
+            ratingValue: trek.rating,
+            reviewCount: trek.total_reviews,
+            bestRating: 5,
+            worstRating: 1,
+          }
+        : undefined,
+  }
+
+  return (
+    <script
+      type="application/ld+json"
+      dangerouslySetInnerHTML={{ __html: JSON.stringify(structuredData) }}
+    />
+  )
+}
+
+// ---------------------------------------------------------------------------
 // Page
 // ---------------------------------------------------------------------------
 export default function TrekDetailPage() {
@@ -463,6 +526,7 @@ export default function TrekDetailPage() {
 
   return (
     <div className="min-h-screen bg-gray-50">
+      <TrekStructuredData trek={trek} slug={slug} />
       {/* ------------------------------------------------------------------ */}
       {/* Image Gallery                                                         */}
       {/* ------------------------------------------------------------------ */}
