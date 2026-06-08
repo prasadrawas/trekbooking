@@ -188,9 +188,10 @@ export class TrekRepository {
       .from("treks")
       .select(
         `
-      id, title, slug, description, difficulty, duration_days, min_child_age, elevation_m,
+      id, title, slug, short_desc, description, difficulty, duration_days, min_child_age, elevation_m,
       distance_km, region, inclusions, exclusions, things_to_carry, itinerary,
-      is_child_friendly, default_pickup_points, is_published, created_at, updated_at,
+      is_child_friendly, child_price_policy, default_pickup_points, default_adult_price,
+      default_child_price, is_published, created_at, updated_at,
       trek_images(id, image_url, alt_text, is_cover, sort_order),
       organizers!inner(org_name, slug, is_verified, avg_rating, logo_url, created_at),
       trek_events(
