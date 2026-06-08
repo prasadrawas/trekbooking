@@ -946,6 +946,55 @@ const WEBSITE_SCHEMA = {
   },
 };
 
+const SITELINKS_SCHEMA = {
+  "@context": "https://schema.org",
+  "@type": "ItemList",
+  itemListElement: [
+    {
+      "@type": "SiteNavigationElement",
+      position: 1,
+      name: "Explore Treks",
+      description: "Browse and book 400+ verified weekend treks near Pune",
+      url: "https://trekbooking.in/treks",
+    },
+    {
+      "@type": "SiteNavigationElement",
+      position: 2,
+      name: "About Us",
+      description: "Learn about TrekBooking and our mission",
+      url: "https://trekbooking.in/about",
+    },
+    {
+      "@type": "SiteNavigationElement",
+      position: 3,
+      name: "Partner With Us",
+      description: "List your treks on TrekBooking — grow your business",
+      url: "https://trekbooking.in/partner",
+    },
+    {
+      "@type": "SiteNavigationElement",
+      position: 4,
+      name: "Contact",
+      description: "Get in touch with the TrekBooking team",
+      url: "https://trekbooking.in/contact",
+    },
+    {
+      "@type": "SiteNavigationElement",
+      position: 5,
+      name: "Sign Up",
+      description: "Create your free TrekBooking account",
+      url: "https://trekbooking.in/signup",
+    },
+    {
+      "@type": "SiteNavigationElement",
+      position: 6,
+      name: "Login",
+      description: "Sign in to your TrekBooking account",
+      url: "https://trekbooking.in/login",
+    },
+  ],
+};
+
 // ─── Page root ─────────────────────────────────────────────────────────────
 
 export default function HomePage() {
@@ -958,6 +1007,10 @@ export default function HomePage() {
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(WEBSITE_SCHEMA) }}
+      />
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(SITELINKS_SCHEMA) }}
       />
       <HeroSection />
       <TrendingTreksSection />
