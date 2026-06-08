@@ -896,7 +896,7 @@ const INITIAL_SCHEDULE_FORM: ScheduleFormState = {
   customDateInput: "",
   reportingTime: "06:00",
   adultPrice: "1200",
-  childPrice: "800",
+  childPrice: "",
   totalSeats: "25",
 };
 
