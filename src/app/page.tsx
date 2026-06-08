@@ -257,7 +257,7 @@ function HeroSection() {
         <motion.div {...fadeUpProps(0)}>
           <span className="inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/10 px-4 py-1.5 text-sm font-medium text-emerald-200 backdrop-blur-sm mb-8">
             <TrendingUp className="h-3.5 w-3.5" />
-            400+ Trek Routes. Verified Organizers. Instant Booking.
+            Curated Trek Routes. Verified Organizers. Instant Booking.
           </span>
         </motion.div>
 
@@ -297,10 +297,10 @@ function HeroSection() {
           className="mt-12 flex flex-wrap items-center justify-center gap-6 sm:gap-10"
         >
           {[
-            { value: 120, suffix: "+", label: "Verified Organizers", icon: Users },
-            { value: 400, suffix: "+", label: "Trek Routes", icon: Map },
+            { value: 0, suffix: "", label: "Verified Organizers", icon: Users, staticText: "Verified" },
+            { value: 0, suffix: "", label: "Curated Routes", icon: Map, staticText: "Curated" },
             { value: 799, prefix: "₹", label: "Starting Price", icon: IndianRupee },
-          ].map(({ value, suffix, prefix, label, icon: Icon }) => (
+          ].map(({ value, suffix, prefix, label, icon: Icon, staticText }) => (
             <motion.div
               key={label}
               variants={staggerItem}
@@ -309,11 +309,13 @@ function HeroSection() {
               <div className="flex items-baseline gap-1">
                 <Icon className="h-4 w-4 text-emerald-300 mb-0.5 mr-0.5 self-center" />
                 <span className="text-3xl sm:text-4xl font-extrabold text-white">
-                  <AnimatedCounter
-                    target={value}
-                    prefix={prefix}
-                    suffix={suffix}
-                  />
+                  {staticText ? staticText : (
+                    <AnimatedCounter
+                      target={value}
+                      prefix={prefix}
+                      suffix={suffix}
+                    />
+                  )}
                 </span>
               </div>
               <span className="text-xs sm:text-sm text-white/60 font-medium">
@@ -438,7 +440,7 @@ const HOW_IT_WORKS_STEPS = [
     icon: Search,
     title: "Discover",
     description:
-      "Browse 400+ verified trek routes across the Sahyadris. Filter by difficulty, region, date, and group size.",
+      "Browse verified trek routes across the Sahyadris. Filter by difficulty, region, date, and group size.",
     color: "text-emerald-600",
     bg: "bg-emerald-50",
     border: "border-emerald-200",
@@ -458,7 +460,7 @@ const HOW_IT_WORKS_STEPS = [
     icon: Mountain,
     title: "Trek!",
     description:
-      "Show up at the meeting point with your WhatsApp confirmation. Gear up and enjoy the Sahyadris.",
+      "Show up at the meeting point with your booking confirmation. Gear up and enjoy the Sahyadris.",
     color: "text-violet-600",
     bg: "bg-violet-50",
     border: "border-violet-200",
@@ -569,7 +571,7 @@ const WHY_FEATURES = [
     icon: Zap,
     title: "Instant Confirmation",
     description:
-      "Get your booking details on WhatsApp and email within seconds of payment. No waiting, no uncertainty.",
+      "Your booking is confirmed instantly after payment. View details in your dashboard — no waiting, no uncertainty.",
     gradient: "from-amber-500/10 to-amber-600/5",
     iconColor: "text-amber-600",
     borderColor: "border-amber-200/60 hover:border-amber-400/60",
@@ -729,7 +731,7 @@ function PartnerCTASection() {
                 <ArrowRight className="w-4 h-4" />
               </Link>
               <Link
-                href="/partner#learn-more"
+                href="/partner"
                 className="inline-flex items-center gap-2 rounded-xl border border-white/30 bg-white/10 px-6 py-3 text-sm font-semibold text-white hover:bg-white/20 active:scale-95 transition-all duration-150"
               >
                 Learn More
@@ -745,10 +747,10 @@ function PartnerCTASection() {
             className="hidden lg:flex flex-col gap-5"
           >
             {[
-              { label: "Active Organizers", value: "120+", sub: "and growing every week" },
-              { label: "Monthly Bookings", value: "2,400+", sub: "completed successfully" },
-              { label: "Avg. Organizer Revenue", value: "₹48,000", sub: "per month on the platform" },
-              { label: "Trekker Satisfaction", value: "4.8 / 5", sub: "average rating across all treks" },
+              { label: "Commission", value: "10%", sub: "only — first 3 months free" },
+              { label: "Setup Cost", value: "₹0", sub: "free listing, no hidden charges" },
+              { label: "Payout Speed", value: "3 Days", sub: "after trek completion" },
+              { label: "Platform", value: "24/7", sub: "online booking & dashboard" },
             ].map((stat, i) => (
               <motion.div
                 key={stat.label}
@@ -790,10 +792,10 @@ function TestimonialsSection() {
           className="text-center mb-12"
         >
           <span className="text-sm font-semibold text-emerald-600 uppercase tracking-wider">
-            Real reviews
+            Trekker experiences
           </span>
           <h2 className="mt-2 text-3xl sm:text-4xl font-extrabold text-slate-900">
-            What Trekkers Say
+            What Trekkers Love
           </h2>
         </motion.div>
 
@@ -875,7 +877,7 @@ function BottomCTASection() {
           Ready to Hit the Trail?
         </h2>
         <p className="text-lg text-slate-500 max-w-md">
-          Join thousands of trekkers exploring the Sahyadri mountains every
+          Explore the Sahyadri mountains with verified organizers every
           weekend. Your next adventure is one click away.
         </p>
         <div className="flex flex-wrap gap-3 justify-center">
@@ -905,9 +907,9 @@ const ORGANIZATION_SCHEMA = {
   "@type": "Organization",
   name: "TrekBooking",
   url: "https://trekbooking.in",
-  logo: "https://trekbooking.in/logo.png",
+  logo: "https://trekbooking.in/icon.svg",
   description:
-    "TrekBooking is India's leading platform for booking verified weekend treks in the Sahyadri mountains near Pune. 400+ trek routes, 120+ organizers, instant online payment.",
+    "TrekBooking is a platform for booking verified weekend treks in the Sahyadri mountains near Pune. Curated trek routes, verified organizers, instant online payment.",
   foundingLocation: {
     "@type": "Place",
     name: "Pune, Maharashtra, India",
@@ -916,15 +918,11 @@ const ORGANIZATION_SCHEMA = {
     "@type": "Place",
     name: "Sahyadri Mountains, Maharashtra, India",
   },
-  sameAs: [
-    "https://www.instagram.com/trekbooking",
-    "https://www.facebook.com/trekbooking",
-    "https://twitter.com/trekbooking",
-  ],
+  sameAs: [],
   contactPoint: {
     "@type": "ContactPoint",
     contactType: "customer support",
-    email: "hello@trekbooking.in",
+    email: "trekbooking.in@gmail.com",
     availableLanguage: ["English", "Hindi", "Marathi"],
   },
 };
@@ -935,7 +933,7 @@ const WEBSITE_SCHEMA = {
   name: "TrekBooking",
   url: "https://trekbooking.in",
   description:
-    "Book verified weekend treks in the Sahyadri mountains near Pune. 400+ routes, instant payment.",
+    "Book verified weekend treks in the Sahyadri mountains near Pune. Curated routes, instant payment.",
   potentialAction: {
     "@type": "SearchAction",
     target: {
@@ -954,7 +952,7 @@ const SITELINKS_SCHEMA = {
       "@type": "SiteNavigationElement",
       position: 1,
       name: "Explore Treks",
-      description: "Browse and book 400+ verified weekend treks near Pune",
+      description: "Browse and book verified weekend treks near Pune",
       url: "https://trekbooking.in/treks",
     },
     {

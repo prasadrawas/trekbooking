@@ -20,7 +20,7 @@ export const metadata: Metadata = {
     template: "%s | TrekBooking",
   },
   description:
-    "Discover and book verified weekend treks in the Sahyadri mountains near Pune. 400+ trek routes, 120+ organizers, instant online payment. Just show up and trek!",
+    "Discover and book verified weekend treks in the Sahyadri mountains near Pune. Curated trek routes, verified organizers, instant online payment. Just show up and trek!",
   keywords: [
     "trek booking Pune",
     "weekend treks near Pune",
@@ -49,7 +49,7 @@ export const metadata: Metadata = {
   openGraph: {
     title: "TrekBooking — Book Weekend Treks Near Pune",
     description:
-      "400+ verified trek routes in the Sahyadris. Book online, pay securely, just show up.",
+      "Verified trek routes in the Sahyadris. Book online, pay securely, just show up.",
     type: "website",
     locale: "en_IN",
     siteName: "TrekBooking",
@@ -67,7 +67,7 @@ export const metadata: Metadata = {
     card: "summary_large_image",
     title: "TrekBooking — Book Weekend Treks Near Pune",
     description:
-      "400+ verified trek routes in the Sahyadris. Book online, pay securely, just show up.",
+      "Verified trek routes in the Sahyadris. Book online, pay securely, just show up.",
     images: ["/og-image.jpg"],
   },
   // TODO: Change to index: true, follow: true when site is ready for launch

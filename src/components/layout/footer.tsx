@@ -22,22 +22,13 @@ const supportLinks = [
   { label: "Terms", href: "/terms" },
 ];
 
-const socialLinks = [
-  {
-    label: "Instagram",
-    href: "https://instagram.com/trekbooking",
-    icon: Globe,
-  },
-  {
-    label: "Twitter",
-    href: "https://twitter.com/trekbooking",
-    icon: Share2,
-  },
-  {
-    label: "YouTube",
-    href: "https://youtube.com/@trekbooking",
-    icon: Rss,
-  },
+const socialLinks: { label: string; href: string; icon: typeof Globe }[] = [
+  // Add social links when accounts are created
+  // {
+  //   label: "Instagram",
+  //   href: "https://instagram.com/trekbooking",
+  //   icon: Globe,
+  // },
 ];
 
 function FooterLinkGroup({
