@@ -123,12 +123,13 @@ export async function POST(
     );
   }
 
-  // Resolve trek and verify ownership
+  // Resolve trek and verify ownership (supports both slug and UUID)
+  const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(slug);
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const { data: trek } = await (supabase as any)
     .from("treks")
     .select("id, organizer_id, default_pickup_points")
-    .eq("slug", slug)
+    .eq(isUuid ? "id" : "slug", slug)
     .single();
 
   if (!trek) {

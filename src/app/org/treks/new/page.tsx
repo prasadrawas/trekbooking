@@ -1198,16 +1198,16 @@ function Step6Schedule({
             <Input type="number" min={1} max={200} value={form.totalSeats} onChange={(e) => setF("totalSeats", e.target.value)} />
           </div>
         </div>
-        <div className="grid grid-cols-2 gap-3">
-          <div>
-            <label className="block text-sm font-medium text-slate-700 mb-1.5">Adult Price (₹) *</label>
-            <Input type="number" min={0} value={form.adultPrice} onChange={(e) => setF("adultPrice", e.target.value)} />
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-slate-700 mb-1.5">Child Price (₹)</label>
-            <Input type="number" min={0} value={form.childPrice} onChange={(e) => setF("childPrice", e.target.value)} />
-          </div>
-        </div>
+        {/* Price is auto-filled from Step 3 — show as read-only info */}
+        {form.adultPrice && (
+          <p className="text-sm text-slate-500">
+            Price per person: <span className="font-semibold text-slate-700">₹{form.adultPrice}</span>
+            {form.childPrice && Number(form.childPrice) > 0 && (
+              <> · Child: <span className="font-semibold text-slate-700">₹{form.childPrice}</span></>
+            )}
+            <span className="text-xs text-slate-400 ml-1">(set in Pricing step)</span>
+          </p>
+        )}
       </div>
 
       {/* Preview */}
