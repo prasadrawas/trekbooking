@@ -3,7 +3,7 @@ import type { Metadata } from "next";
 export const metadata: Metadata = {
   title: "About Us",
   description:
-    "Learn about TrekBooking — Pune's leading weekend trek booking platform. Founded by trekkers for trekkers. 120+ verified organizers, 400+ Sahyadri routes, 12,000+ happy adventurers.",
+    "Learn about TrekBooking — Pune's weekend trek booking platform. Founded in 2026 to make Sahyadri trek booking seamless for trekkers and organizers alike.",
   keywords: [
     "about TrekBooking",
     "trek booking platform Pune",
@@ -17,7 +17,7 @@ export const metadata: Metadata = {
   openGraph: {
     title: "About Us | TrekBooking",
     description:
-      "Founded by trekkers for trekkers. TrekBooking connects 12,000+ adventurers with 120+ verified organizers across the Sahyadri mountains.",
+      "Founded by trekkers for trekkers. TrekBooking connects adventurers with verified organizers across the Sahyadri mountains.",
     type: "website",
     url: "https://trekbooking.in/about",
     images: [

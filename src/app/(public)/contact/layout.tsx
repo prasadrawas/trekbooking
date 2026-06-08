@@ -15,7 +15,7 @@ export const metadata: Metadata = {
   openGraph: {
     title: "Contact Us | TrekBooking",
     description:
-      "Questions about a trek or booking? Get in touch with the TrekBooking team — we respond within the hour.",
+      "Questions about a trek or booking? Get in touch with the TrekBooking team — we'll get back to you soon.",
     type: "website",
     url: "https://trekbooking.in/contact",
     images: [

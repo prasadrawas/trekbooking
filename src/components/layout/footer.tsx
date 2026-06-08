@@ -3,21 +3,17 @@ import { Mountain, Globe, Share2, Rss } from "lucide-react";
 
 const exploreLinks = [
   { label: "All Treks", href: "/treks" },
-  { label: "Easy Treks", href: "/treks?difficulty=easy" },
-  { label: "Weekend Treks", href: "/treks?type=weekend" },
-  { label: "Night Treks", href: "/treks?type=night" },
+  { label: "Weekend Treks", href: "/treks" },
+  { label: "Night Treks", href: "/treks" },
 ];
 
 const companyLinks = [
   { label: "About Us", href: "/about" },
   { label: "Partner With Us", href: "/partner" },
   { label: "Contact", href: "/contact" },
-  { label: "Blog", href: "/blog" },
 ];
 
 const supportLinks = [
-  { label: "FAQs", href: "/faqs" },
-  { label: "Cancellation Policy", href: "/cancellation-policy" },
   { label: "Privacy Policy", href: "/privacy-policy" },
   { label: "Terms", href: "/terms" },
 ];

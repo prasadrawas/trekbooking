@@ -3,7 +3,7 @@ import type { Metadata } from "next";
 export const metadata: Metadata = {
   title: "Explore Treks",
   description:
-    "Browse and book 400+ verified weekend treks in the Sahyadri mountains near Pune. Filter by difficulty, region, date, and group size. Easy online booking with instant confirmation.",
+    "Browse verified weekend treks in the Sahyadri mountains near Pune. Filter by difficulty, region, date, and group size. Easy online booking with instant confirmation.",
   keywords: [
     "trek booking Pune",
     "weekend treks near Pune",
@@ -27,7 +27,7 @@ export const metadata: Metadata = {
   openGraph: {
     title: "Explore Treks | TrekBooking",
     description:
-      "Browse 400+ verified weekend treks in the Sahyadri mountains near Pune. Filter, book, and just show up.",
+      "Browse verified weekend treks in the Sahyadri mountains near Pune. Filter, book, and just show up.",
     type: "website",
     url: "https://trekbooking.in/treks",
     images: [
@@ -43,7 +43,7 @@ export const metadata: Metadata = {
     card: "summary_large_image",
     title: "Explore Treks | TrekBooking",
     description:
-      "Browse 400+ verified weekend treks in the Sahyadri mountains near Pune.",
+      "Browse verified weekend treks in the Sahyadri mountains near Pune.",
     images: ["/og-image.jpg"],
   },
   alternates: {

@@ -13,7 +13,6 @@ import {
   EyeOff,
   ClipboardX,
   CheckCircle2,
-  Star,
   ArrowRight,
   ChevronRight,
   IndianRupee,
@@ -148,29 +147,6 @@ const CALC_DATA = [
   { bookings: 100, revenue: 149900, commission: 14990, payout: 134910, label: "Top Organizer" },
 ]
 
-const TESTIMONIALS = [
-  {
-    name: "Ganesh Dhavale",
-    org: "Sahyadri Hikers",
-    avatar: "GD",
-    rating: 5,
-    text: "In 6 months on TrekBooking, my monthly bookings went from 8 to 45. The dashboard saves me 10 hours of admin every week.",
-  },
-  {
-    name: "Prachi Wagh",
-    org: "GreenTrails Pune",
-    avatar: "PW",
-    rating: 5,
-    text: "The no-show problem is basically gone. Online payments mean people are actually committed when they book. Game-changer.",
-  },
-  {
-    name: "Sagar Kulkarni",
-    org: "PuneWild Expeditions",
-    avatar: "SK",
-    rating: 5,
-    text: "My treks now appear when people search 'weekend trek Pune'. TrekBooking gave me visibility I could never build alone.",
-  },
-]
 
 // ---------------------------------------------------------------------------
 // Page
@@ -225,8 +201,8 @@ export default function PartnerPage() {
             transition={{ delay: 0.2, duration: 0.5 }}
             className="text-xl md:text-2xl text-emerald-100 max-w-2xl mx-auto mb-10 leading-relaxed"
           >
-            Stop managing bookings on WhatsApp. List your treks on TrekBooking and reach
-            thousands of trekkers in Pune every weekend.
+            Stop managing bookings on WhatsApp. List your treks on TrekBooking and grow
+            your trekking business in Pune.
           </motion.p>
 
           <motion.div
@@ -251,15 +227,6 @@ export default function PartnerPage() {
             </a>
           </motion.div>
 
-          {/* Trust line */}
-          <motion.p
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ delay: 0.45 }}
-            className="text-emerald-400 text-sm mt-6"
-          >
-            120+ organizers · ₹2 Cr+ processed · 4.8★ platform rating
-          </motion.p>
         </div>
       </section>
 
@@ -507,7 +474,7 @@ export default function PartnerPage() {
                 ))}
               </div>
               <p className="text-xs text-gray-400 mt-3">
-                *First 3 months are commission-free for all new organizers.
+                *First 3 months are commission-free (time-based) for all new organizers.
               </p>
             </div>
           </motion.div>
@@ -626,54 +593,26 @@ export default function PartnerPage() {
       </section>
 
       {/* ------------------------------------------------------------------ */}
-      {/* Testimonials                                                         */}
+      {/* Founding Organizers CTA                                             */}
       {/* ------------------------------------------------------------------ */}
       <section className="bg-white py-16 px-4">
-        <div className="max-w-6xl mx-auto">
+        <div className="max-w-3xl mx-auto">
           <motion.div
             custom={0}
             variants={fadeUp}
             initial="hidden"
             whileInView="show"
             viewport={{ once: true }}
-            className="text-center mb-10"
+            className="text-center bg-emerald-50 border border-emerald-200 rounded-3xl p-10"
           >
-            <h2 className="text-3xl font-bold text-gray-900 mb-3">
-              Organizers Love TrekBooking
+            <HeartHandshake className="w-12 h-12 text-emerald-600 mx-auto mb-4" />
+            <h2 className="text-2xl font-bold text-gray-900 mb-3">
+              Be Among Our Founding Organizers
             </h2>
-            <p className="text-gray-500">Don't take our word for it.</p>
-          </motion.div>
-
-          <motion.div
-            variants={stagger}
-            initial="hidden"
-            whileInView="show"
-            viewport={{ once: true }}
-            className="grid md:grid-cols-3 gap-6"
-          >
-            {TESTIMONIALS.map(({ name, org, avatar, rating, text }) => (
-              <motion.div
-                key={name}
-                variants={itemFade}
-                className="bg-gray-50 rounded-2xl p-6 border border-gray-100 hover:border-emerald-200 hover:shadow-md transition-all"
-              >
-                <div className="flex gap-0.5 mb-4">
-                  {Array.from({ length: rating }).map((_, i) => (
-                    <Star key={i} className="w-4 h-4 text-amber-400 fill-amber-400" />
-                  ))}
-                </div>
-                <p className="text-gray-700 text-sm leading-relaxed mb-4">&ldquo;{text}&rdquo;</p>
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-full bg-gradient-to-br from-emerald-500 to-teal-600 text-white text-sm font-bold flex items-center justify-center shrink-0">
-                    {avatar}
-                  </div>
-                  <div>
-                    <p className="font-bold text-gray-900 text-sm">{name}</p>
-                    <p className="text-xs text-gray-500">{org}</p>
-                  </div>
-                </div>
-              </motion.div>
-            ))}
+            <p className="text-gray-600 text-lg">
+              Be among our founding organizers and shape the platform. Your feedback directly
+              influences how TrekBooking is built.
+            </p>
           </motion.div>
         </div>
       </section>
@@ -692,7 +631,7 @@ export default function PartnerPage() {
         >
           <div className="text-center mb-8">
             <h2 className="text-4xl font-black text-gray-900 mb-4">
-              Ready to Join 120+ Organizers?
+              Ready to Grow Your Trek Business?
             </h2>
             <p className="text-gray-600 text-lg">
               Apply takes 3 minutes. Free setup. No contracts. Your first 3 months are on us.
@@ -707,7 +646,7 @@ export default function PartnerPage() {
                 </label>
                 <input
                   type="text"
-                  placeholder="Ganesh Dhavale"
+                  placeholder="Your name"
                   className="w-full px-3.5 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500"
                 />
               </div>
@@ -717,7 +656,7 @@ export default function PartnerPage() {
                 </label>
                 <input
                   type="text"
-                  placeholder="Sahyadri Hikers"
+                  placeholder="Your organisation name"
                   className="w-full px-3.5 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500"
                 />
               </div>
@@ -727,7 +666,7 @@ export default function PartnerPage() {
                 </label>
                 <input
                   type="tel"
-                  placeholder="+91 98765 43210"
+                  placeholder="+91 7020845256"
                   className="w-full px-3.5 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500"
                 />
               </div>

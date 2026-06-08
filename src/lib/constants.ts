@@ -50,7 +50,7 @@ export const SITE_CONFIG = {
   description:
     "Book weekend treks near Pune. Explore Sahyadri mountains with verified organizers.",
   url: process.env.NEXT_PUBLIC_BASE_URL || "https://trekbooking.in",
-  ogImage: "/og-image.jpg",
+  ogImage: "/icon.svg",
   email: "trekbooking.in@gmail.com",
-  phone: "+91 XXXXX XXXXX",
+  phone: "+91 7020845256",
 } as const;

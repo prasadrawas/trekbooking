@@ -25,19 +25,19 @@ import { RatingStars } from "@/components/shared/rating-stars";
 const MOCK_ORGANIZER = {
   slug: "sahyadri-explorers",
   name: "Sahyadri Explorers",
-  tagline: "Unlocking the Sahyadris — one summit at a time.",
+  tagline: "Trek organizer in the Sahyadri mountains.",
   description:
-    "Sahyadri Explorers is a Pune-based trekking organization founded in 2018 by a group of passionate mountaineers. We specialize in guided treks across the Western Ghats, from beginner-friendly sunrise walks to multi-day ridge traversals. Every trek is led by certified, experienced guides who prioritize safety, ecology, and deep local knowledge. We've helped over 8,000 trekkers discover the hidden gems of Maharashtra.",
+    "Trek organizer in the Sahyadri mountains.",
   logo: null, // Replace with actual image URL in production
   is_verified: true,
-  avg_rating: 4.8,
-  total_reviews: 612,
-  total_treks: 18,
+  avg_rating: 0,
+  total_reviews: 0,
+  total_treks: 0,
   active_since: "2018",
   location: "Pune, Maharashtra",
-  phone: "+91 98765 43210",
-  email: "hello@sahyadriexplorers.in",
-  website: "https://sahyadriexplorers.in",
+  phone: "",
+  email: "",
+  website: "",
 };
 
 const MOCK_TREKS = [
@@ -49,8 +49,8 @@ const MOCK_TREKS = [
     duration: 2,
     distance: 18,
     price: 1499,
-    rating: 4.8,
-    total_reviews: 312,
+    rating: 0,
+    total_reviews: 0,
     available_seats: 8,
     total_seats: 20,
     next_date: "2026-06-14",
@@ -66,8 +66,8 @@ const MOCK_TREKS = [
     duration: 2,
     distance: 24,
     price: 1999,
-    rating: 4.9,
-    total_reviews: 89,
+    rating: 0,
+    total_reviews: 0,
     available_seats: 6,
     total_seats: 12,
     next_date: "2026-06-28",
@@ -83,8 +83,8 @@ const MOCK_TREKS = [
     duration: 1,
     distance: 7,
     price: 599,
-    rating: 4.5,
-    total_reviews: 211,
+    rating: 0,
+    total_reviews: 0,
     available_seats: 22,
     total_seats: 30,
     next_date: "2026-06-07",
@@ -94,35 +94,15 @@ const MOCK_TREKS = [
   },
 ];
 
-const MOCK_REVIEWS = [
-  {
-    id: "r1",
-    reviewer_name: "Priya Sharma",
-    avatar_initials: "PS",
-    rating: 5,
-    date: "May 2026",
-    trek: "Harishchandragad via Nalichi Vaat",
-    body: "Absolutely incredible experience! The guide knew every rock and ridge. Safety was top priority and the views from the top were breathtaking. Will definitely book again.",
-  },
-  {
-    id: "r2",
-    reviewer_name: "Aditya Kulkarni",
-    avatar_initials: "AK",
-    rating: 5,
-    date: "Apr 2026",
-    trek: "Rajgad Fort Trek",
-    body: "Very professional team. They gave a full briefing before the trek, had first-aid ready, and the meals were surprisingly tasty. Highly recommend for first-timers.",
-  },
-  {
-    id: "r3",
-    reviewer_name: "Sneha Joshi",
-    avatar_initials: "SJ",
-    rating: 4,
-    date: "Mar 2026",
-    trek: "Sinhagad Sunrise Trek",
-    body: "Great sunrise experience! The guide was knowledgeable about local history. Only minor feedback — could have a bit more time at the top. Overall wonderful morning.",
-  },
-];
+const MOCK_REVIEWS: {
+  id: string;
+  reviewer_name: string;
+  avatar_initials: string;
+  rating: number;
+  date: string;
+  trek: string;
+  body: string;
+}[] = [];
 
 // ---------------------------------------------------------------------------
 // Animation variants

@@ -11,9 +11,6 @@ import {
   MessageCircle,
   CheckCircle2,
   Mountain,
-  Share2,
-  Globe,
-  Rss,
   ChevronDown,
 } from "lucide-react"
 
@@ -47,16 +44,16 @@ const CONTACT_INFO = [
     icon: Mail,
     label: "Email Us",
     value: "trekbooking.in@gmail.com",
-    sublabel: "We reply within 2 hours",
+    sublabel: "We'll get back to you soon",
     href: "mailto:trekbooking.in@gmail.com",
     color: "bg-blue-50 text-blue-600",
   },
   {
     icon: Phone,
     label: "Call / WhatsApp",
-    value: "+91 98765 43210",
+    value: "+91 7020845256",
     sublabel: "Mon–Sat, 9 AM – 7 PM",
-    href: "tel:+919876543210",
+    href: "tel:+917020845256",
     color: "bg-emerald-50 text-emerald-600",
   },
   {
@@ -64,7 +61,7 @@ const CONTACT_INFO = [
     label: "Visit Us",
     value: "Baner, Pune",
     sublabel: "Maharashtra 411045",
-    href: "https://maps.google.com",
+    href: "https://maps.google.com/?q=Baner,Pune,Maharashtra,411045",
     color: "bg-orange-50 text-orange-600",
   },
   {
@@ -185,7 +182,7 @@ export default function ContactPage() {
           </h1>
           <p className="text-emerald-200 text-lg max-w-xl mx-auto">
             Have a question about a booking, an organizer partnership, or just want to say hi?
-            We reply within 2 hours on weekdays.
+            Reach us via email or WhatsApp and we&apos;ll get back to you soon.
           </p>
         </motion.div>
       </section>
@@ -274,7 +271,7 @@ export default function ContactPage() {
               </div>
               <div className="p-3 text-center">
                 <a
-                  href="https://maps.google.com"
+                  href="https://maps.google.com/?q=Baner,Pune,Maharashtra,411045"
                   target="_blank"
                   rel="noopener noreferrer"
                   className="text-xs text-emerald-700 font-semibold hover:underline"
@@ -284,34 +281,6 @@ export default function ContactPage() {
               </div>
             </motion.div>
 
-            {/* Social links */}
-            <motion.div
-              custom={5}
-              variants={fadeUp}
-              initial="hidden"
-              animate="show"
-              className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5"
-            >
-              <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-3">
-                Follow Us
-              </p>
-              <div className="flex gap-3">
-                {[
-                  { icon: Share2, label: "Instagram", color: "hover:text-pink-500" },
-                  { icon: Globe, label: "Twitter/X", color: "hover:text-sky-500" },
-                  { icon: Rss, label: "YouTube", color: "hover:text-red-500" },
-                ].map(({ icon: Icon, label, color }) => (
-                  <button
-                    key={label}
-                    type="button"
-                    title={label}
-                    className={`w-10 h-10 rounded-xl border border-gray-200 flex items-center justify-center text-gray-500 ${color} hover:border-current transition-all`}
-                  >
-                    <Icon className="w-4 h-4" />
-                  </button>
-                ))}
-              </div>
-            </motion.div>
           </div>
 
           {/* ===== RIGHT: Contact Form (spans 2 cols) ===== */}
@@ -400,7 +369,7 @@ export default function ContactPage() {
                     </button>
 
                     <p className="text-xs text-gray-400 text-center">
-                      We reply within 2 hours on weekdays. No spam — just help.
+                      We&apos;ll get back to you soon. No spam — just help.
                     </p>
                   </form>
                 </>
@@ -419,10 +388,11 @@ export default function ContactPage() {
                   >
                     <CheckCircle2 className="w-10 h-10 text-emerald-600" />
                   </motion.div>
-                  <h3 className="text-2xl font-bold text-gray-900 mb-2">Message Sent!</h3>
+                  <h3 className="text-2xl font-bold text-gray-900 mb-2">Thanks for reaching out!</h3>
                   <p className="text-gray-600 max-w-sm mx-auto mb-6">
-                    Thanks, {name || "there"}! We've received your message and will reply to{" "}
-                    <strong>{email}</strong> within 2 hours.
+                    Thank you! Please email us directly at{" "}
+                    <strong>trekbooking.in@gmail.com</strong> for a faster response. We&apos;re
+                    working on enabling this form.
                   </p>
                   <button
                     type="button"

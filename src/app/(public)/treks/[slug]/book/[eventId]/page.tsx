@@ -677,11 +677,11 @@ export default function BookingPage() {
               <AlertCircle className="w-4 h-4 text-amber-500 shrink-0 mt-0.5" />
               <p>
                 By proceeding, you agree to our{" "}
-                <Link href="#" className="text-emerald-700 underline">
+                <Link href="/about" className="text-emerald-700 underline">
                   Cancellation Policy
                 </Link>{" "}
                 and{" "}
-                <Link href="#" className="text-emerald-700 underline">
+                <Link href="/about" className="text-emerald-700 underline">
                   Terms of Service
                 </Link>
                 . Bookings are non-refundable 48 hours before the trek.
@@ -748,7 +748,7 @@ export default function BookingPage() {
                   <div
                     className={`h-36 bg-gradient-to-br ${activeEvent.gradientFrom} ${activeEvent.gradientTo} relative flex items-center justify-center`}
                   >
-                    <span className="text-white/20 text-5xl font-black select-none">रायगड</span>
+                    <span className="text-white/20 text-5xl font-black select-none">⛰️</span>
                     <div className="absolute inset-0 bg-black/20" />
                     <div className="absolute bottom-3 left-4 right-4">
                       <p className="text-white font-bold text-base leading-tight">{activeEvent.title}</p>
@@ -864,7 +864,7 @@ export default function BookingPage() {
                     </div>
                     <div className="flex items-center gap-2 text-xs text-gray-500">
                       <CheckCircle2 className="w-4 h-4 text-emerald-500 shrink-0" />
-                      <span>Instant Confirmation — ticket emailed within 2 minutes</span>
+                      <span>Instant Confirmation — view details in your dashboard</span>
                     </div>
                     <div className="flex items-center gap-2 text-xs text-gray-500">
                       <AlertCircle className="w-4 h-4 text-amber-500 shrink-0" />

@@ -23,8 +23,8 @@ const MOCK_TREKS = [
     duration: 2,
     distance: 18,
     price: 1499,
-    rating: 4.8,
-    total_reviews: 312,
+    rating: 0,
+    total_reviews: 0,
     available_seats: 8,
     total_seats: 20,
     next_date: "2026-06-14",
@@ -40,8 +40,8 @@ const MOCK_TREKS = [
     duration: 2,
     distance: 14,
     price: 1299,
-    rating: 4.6,
-    total_reviews: 198,
+    rating: 0,
+    total_reviews: 0,
     available_seats: 14,
     total_seats: 25,
     next_date: "2026-06-21",
@@ -57,8 +57,8 @@ const MOCK_TREKS = [
     duration: 1,
     distance: 7,
     price: 599,
-    rating: 4.5,
-    total_reviews: 540,
+    rating: 0,
+    total_reviews: 0,
     available_seats: 22,
     total_seats: 30,
     next_date: "2026-06-07",
@@ -74,8 +74,8 @@ const MOCK_TREKS = [
     duration: 1,
     distance: 12,
     price: 799,
-    rating: 4.4,
-    total_reviews: 276,
+    rating: 0,
+    total_reviews: 0,
     available_seats: 3,
     total_seats: 20,
     next_date: "2026-06-08",
@@ -91,8 +91,8 @@ const MOCK_TREKS = [
     duration: 2,
     distance: 24,
     price: 1999,
-    rating: 4.9,
-    total_reviews: 89,
+    rating: 0,
+    total_reviews: 0,
     available_seats: 6,
     total_seats: 12,
     next_date: "2026-06-28",
@@ -108,8 +108,8 @@ const MOCK_TREKS = [
     duration: 1,
     distance: 10,
     price: 899,
-    rating: 4.7,
-    total_reviews: 421,
+    rating: 0,
+    total_reviews: 0,
     available_seats: 18,
     total_seats: 25,
     next_date: "2026-06-15",
@@ -284,15 +284,14 @@ function TreksPageContent() {
           <div className="inline-flex items-center gap-2 bg-emerald-600/40 border border-emerald-400/30 rounded-full px-4 py-1.5 mb-4">
             <Mountain className="w-4 h-4 text-emerald-200" />
             <span className="text-emerald-100 text-sm font-medium">
-              {filtered.length} treks available this weekend
+              {filtered.length} treks listed
             </span>
           </div>
           <h1 className="text-4xl md:text-5xl font-bold text-white mb-3 tracking-tight">
             Explore Treks
           </h1>
           <p className="text-emerald-200 text-lg max-w-xl mx-auto">
-            Discover hand-picked Sahyadri treks with verified organizers. Filter by date,
-            difficulty, or region and book in seconds.
+            Discover Sahyadri treks. Filter by difficulty, region, and book in seconds.
           </p>
         </motion.div>
 

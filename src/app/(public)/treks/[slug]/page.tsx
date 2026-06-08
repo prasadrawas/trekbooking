@@ -40,14 +40,14 @@ const MOCK_TREK = {
   elevation: 1376,
   region: "Rajmachi",
   is_child_friendly: false,
-  rating: 4.8,
-  total_reviews: 312,
+  rating: 0,
+  total_reviews: 0,
   organizer: {
     slug: "sahyadri-hikers",
     name: "Sahyadri Hikers",
     verified: true,
-    rating: 4.9,
-    total_treks: 48,
+    rating: 0,
+    total_treks: 0,
     since: "2019",
   },
   description: `Rajgad, meaning "King's Fort," is one of the grandest hill forts in Maharashtra and served as Chhatrapati Shivaji Maharaj's capital for over 26 years. Perched at 1,376 m, the fort offers an unmatched panoramic view of the surrounding Sahyadri ranges and the Neera river valley.
@@ -155,36 +155,8 @@ This 2-day trek covers the three machi (plateaus): Padmavati Machi, Suvela Machi
       totalSeats: 20,
     },
   ],
-  reviews: [
-    {
-      id: 1,
-      name: "Priya Mehta",
-      avatar: "PM",
-      rating: 5,
-      date: "May 2026",
-      comment:
-        "Absolutely magical! The night at the fort was surreal — stars, wind, and history all around. Sahyadri Hikers are super professional. Highly recommended for any serious trekker.",
-    },
-    {
-      id: 2,
-      name: "Rahul Desai",
-      avatar: "RD",
-      rating: 5,
-      date: "Apr 2026",
-      comment:
-        "The Suvela Machi section blew my mind. Trek leader Ganesh was incredibly knowledgeable about the fort's history. Food was simple but tasty. Will be booking their Harishchandragad next!",
-    },
-    {
-      id: 3,
-      name: "Sneha Kulkarni",
-      avatar: "SK",
-      rating: 4,
-      date: "Mar 2026",
-      comment:
-        "Great experience overall! The ascent is steeper than expected for 'moderate' — bring good shoes. The sunrise view from the top makes every step worth it.",
-    },
-  ],
-  ratingBreakdown: { 5: 228, 4: 56, 3: 18, 2: 7, 1: 3 },
+  reviews: [] as Array<{ id: number | string; name: string; avatar: string; rating: number; date: string; comment: string }>,
+  ratingBreakdown: { 5: 0, 4: 0, 3: 0, 2: 0, 1: 0 } as Record<number, number>,
   images: [] as Array<{ id: string; url: string; isCover: boolean }>,
 }
 
@@ -210,8 +182,8 @@ const SIMILAR_TREKS = [
     duration: 2,
     distance: 14,
     price: 1299,
-    rating: 4.6,
-    total_reviews: 198,
+    rating: 0,
+    total_reviews: 0,
     available_seats: 14,
     total_seats: 25,
     next_date: "2026-06-21",
@@ -227,8 +199,8 @@ const SIMILAR_TREKS = [
     duration: 2,
     distance: 24,
     price: 1999,
-    rating: 4.9,
-    total_reviews: 89,
+    rating: 0,
+    total_reviews: 0,
     available_seats: 6,
     total_seats: 12,
     next_date: "2026-06-28",
@@ -244,8 +216,8 @@ const SIMILAR_TREKS = [
     duration: 1,
     distance: 12,
     price: 799,
-    rating: 4.4,
-    total_reviews: 276,
+    rating: 0,
+    total_reviews: 0,
     available_seats: 3,
     total_seats: 20,
     next_date: "2026-06-08",
@@ -373,14 +345,14 @@ export default function TrekDetailPage() {
           elevation: t.elevation_m,
           region: t.region ?? MOCK_TREK.region,
           is_child_friendly: t.is_child_friendly ?? false,
-          rating: t.organizers?.avg_rating ?? MOCK_TREK.rating,
-          total_reviews: MOCK_TREK.total_reviews,
+          rating: t.organizers?.avg_rating ?? 0,
+          total_reviews: 0,
           organizer: {
             slug: t.organizers?.slug ?? MOCK_TREK.organizer.slug,
             name: t.organizers?.org_name ?? MOCK_TREK.organizer.name,
             verified: t.organizers?.is_verified ?? false,
-            rating: t.organizers?.avg_rating ?? MOCK_TREK.organizer.rating,
-            total_treks: MOCK_TREK.organizer.total_treks,
+            rating: t.organizers?.avg_rating ?? 0,
+            total_treks: 0,
             since: t.organizers?.created_at
               ? new Date(t.organizers.created_at).getFullYear().toString()
               : MOCK_TREK.organizer.since,
@@ -429,7 +401,7 @@ export default function TrekDetailPage() {
               }
             }),
           reviews: [],
-          ratingBreakdown: MOCK_TREK.ratingBreakdown,
+          ratingBreakdown: { 5: 0, 4: 0, 3: 0, 2: 0, 1: 0 },
           images: (t.trek_images ?? []).map((img: { id: string; image_url: string; is_cover: boolean }) => ({
             id: img.id,
             url: img.image_url,

@@ -7,12 +7,11 @@ import {
   Heart,
   ShieldCheck,
   Users,
-  Star,
   MapPin,
   ArrowRight,
   Leaf,
   Globe,
-  Trophy,
+  Zap,
 } from "lucide-react"
 
 // ---------------------------------------------------------------------------
@@ -41,10 +40,10 @@ const itemFade = {
 // Data
 // ---------------------------------------------------------------------------
 const STATS = [
-  { icon: Users, value: "120+", label: "Verified Organizers", color: "text-emerald-600" },
-  { icon: MapPin, value: "400+", label: "Trek Routes", color: "text-teal-600" },
-  { icon: Star, value: "12,000+", label: "Happy Trekkers", color: "text-amber-500" },
-  { icon: Trophy, value: "4.8★", label: "Average Rating", color: "text-orange-500" },
+  { icon: Users, value: "Verified", label: "Organizers", color: "text-emerald-600" },
+  { icon: MapPin, value: "Curated", label: "Routes", color: "text-teal-600" },
+  { icon: Zap, value: "Instant", label: "Booking", color: "text-amber-500" },
+  { icon: ShieldCheck, value: "Safe &", label: "Secure", color: "text-blue-600" },
 ]
 
 const VALUES = [
@@ -80,41 +79,30 @@ const VALUES = [
 
 const TEAM = [
   {
-    name: "Arjun Patil",
-    role: "Co-Founder & CEO",
-    avatar: "AP",
+    name: "Prasad Rawas",
+    role: "Leading Development",
+    avatar: "PR",
     gradient: "from-emerald-500 to-teal-600",
-    bio: "Former software engineer turned avid trekker. Completed 150+ Sahyadri treks before founding TrekBooking.",
+    bio: "Full-stack developer building the platform from ground up.",
   },
   {
-    name: "Pooja Sharma",
-    role: "Co-Founder & COO",
-    avatar: "PS",
+    name: "Suraj Shelke",
+    role: "Leading Business Ops",
+    avatar: "SS",
     gradient: "from-rose-500 to-pink-600",
-    bio: "Operations guru with 8 years in travel tech. Passionate about making the outdoors accessible to every family.",
+    bio: "Managing organizer partnerships and business growth.",
   },
   {
-    name: "Rahul Deshpande",
-    role: "Head of Organizer Success",
-    avatar: "RD",
+    name: "Pratik",
+    role: "Leading Business Ops",
+    avatar: "P",
     gradient: "from-amber-500 to-orange-600",
-    bio: "Ex-trek organizer himself. Now helps 120+ organizers grow their businesses through the platform.",
-  },
-  {
-    name: "Sneha Joshi",
-    role: "Lead Engineer",
-    avatar: "SJ",
-    gradient: "from-blue-500 to-indigo-600",
-    bio: "Full-stack engineer who's also a certified trek leader. Builds the platform she'd want to use on every trek.",
+    bio: "Operations and trekker community engagement.",
   },
 ]
 
 const TIMELINE = [
-  { year: "2019", event: "Founded in Pune with 3 organizers and 12 trek routes" },
-  { year: "2021", event: "Reached 50 organizers and 5,000 bookings. Launched mobile app." },
-  { year: "2023", event: "100+ organizers, ₹2 Cr in bookings processed. Seed funding raised." },
-  { year: "2025", event: "Expanded to 400+ routes. Launched child-friendly trek filter." },
-  { year: "2026", event: "12,000+ trekkers served. New platform launch with instant payments." },
+  { year: "2026", event: "Founded in Pune with a mission to make trek booking seamless for both trekkers and organizers." },
 ]
 
 // ---------------------------------------------------------------------------
@@ -271,8 +259,8 @@ export default function AboutPage() {
           viewport={{ once: true }}
           className="text-center mb-12"
         >
-          <h2 className="text-3xl font-bold text-gray-900 mb-3">Our Journey</h2>
-          <p className="text-gray-500">From 3 organizers to a thriving community.</p>
+          <h2 className="text-3xl font-bold text-gray-900 mb-3">Our Story</h2>
+          <p className="text-gray-500">How TrekBooking began.</p>
         </motion.div>
 
         <div className="space-y-0">
@@ -329,7 +317,7 @@ export default function AboutPage() {
             initial="hidden"
             whileInView="show"
             viewport={{ once: true }}
-            className="grid sm:grid-cols-2 lg:grid-cols-4 gap-6"
+            className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6"
           >
             {TEAM.map(({ name, role, avatar, gradient, bio }) => (
               <motion.div
@@ -367,7 +355,7 @@ export default function AboutPage() {
           <Mountain className="w-12 h-12 mx-auto mb-4 text-emerald-200" />
           <h2 className="text-2xl font-bold mb-3">Ready to Explore the Sahyadris?</h2>
           <p className="text-emerald-200 mb-6">
-            Join 12,000+ trekkers who've discovered the magic of the Western Ghats with
+            Join our community of trekkers and discover the magic of the Western Ghats with
             TrekBooking.
           </p>
           <div className="flex flex-col sm:flex-row gap-3 justify-center">

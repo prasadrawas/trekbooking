@@ -3,7 +3,7 @@ import type { Metadata } from "next";
 export const metadata: Metadata = {
   title: "Partner With Us — List Your Treks",
   description:
-    "Are you a trek organizer in Maharashtra? Partner with TrekBooking to list your treks, reach thousands of trekkers in Pune, and grow your business — free setup, only 10% commission.",
+    "Are you a trek organizer in Maharashtra? Partner with TrekBooking to list your treks, manage bookings online, and grow your business — free setup, only 10% commission.",
   keywords: [
     "trek organizer partnership",
     "list treks online Pune",
@@ -19,7 +19,7 @@ export const metadata: Metadata = {
   openGraph: {
     title: "Partner With Us — List Your Treks | TrekBooking",
     description:
-      "Grow your trekking business with TrekBooking. Free setup, 10% commission, instant payments. Reach thousands of trekkers in Pune and Maharashtra.",
+      "Grow your trekking business with TrekBooking. Free setup, 10% commission, instant payments. List your treks and reach trekkers in Pune and Maharashtra.",
     type: "website",
     url: "https://trekbooking.in/partner",
     images: [
@@ -35,7 +35,7 @@ export const metadata: Metadata = {
     card: "summary_large_image",
     title: "Partner With TrekBooking — List Your Treks",
     description:
-      "Grow your trekking business. Free listing, instant payments, thousands of trekkers waiting.",
+      "Grow your trekking business. Free listing, instant payments, manage bookings without the WhatsApp chaos.",
     images: ["/og-image.jpg"],
   },
   alternates: {
