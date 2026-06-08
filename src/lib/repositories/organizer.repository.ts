@@ -50,10 +50,11 @@ export class OrganizerRepository {
   async findByProfileId(profileId: string) {
     const { data, error } = await (this.client as any)
       .from("organizers")
-      .select("id, profile_id, org_name, slug, description, phone, email, logo_url, is_verified, avg_rating, bank_account_name, bank_account_number, bank_ifsc, default_cancellation_rules, created_at, updated_at")
+      .select("id, profile_id, org_name, slug, description, phone, email, logo_url, is_verified, avg_rating, status, bank_account_name, bank_account_number, bank_ifsc, default_cancellation_rules, created_at")
       .eq("profile_id", profileId)
       .single();
 
+    if (error && error.code === "PGRST116") return null; // No row found
     if (error) throw new Error(`OrganizerRepository.findByProfileId: ${error.message}`);
     return data;
   }
@@ -120,7 +121,7 @@ export class OrganizerRepository {
       .from("organizers")
       .update({ ...updates })
       .eq("profile_id", profileId)
-      .select("id, profile_id, org_name, slug, description, phone, email, logo_url, is_verified, avg_rating, bank_account_name, bank_account_number, bank_ifsc, default_cancellation_rules, created_at, updated_at")
+      .select("id, profile_id, org_name, slug, description, phone, email, logo_url, is_verified, avg_rating, status, bank_account_name, bank_account_number, bank_ifsc, default_cancellation_rules, created_at")
       .single();
 
     if (error) throw new Error(`OrganizerRepository.update: ${error.message}`);
