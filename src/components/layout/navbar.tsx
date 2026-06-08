@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { useRouter, usePathname } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import { Mountain, Menu, X, User, LogOut, LayoutDashboard, ChevronDown } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
@@ -22,18 +22,25 @@ interface AuthUser {
 
 export function Navbar() {
   const router = useRouter();
-  const [scrolled, setScrolled] = useState(false);
+  const pathname = usePathname();
+  // Only the landing page (/) has the transparent hero — all other pages start solid
+  const isHeroPage = pathname === "/";
+  const [scrolled, setScrolled] = useState(!isHeroPage);
   const [mobileOpen, setMobileOpen] = useState(false);
   const [userMenuOpen, setUserMenuOpen] = useState(false);
   const [user, setUser] = useState<AuthUser | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    if (!isHeroPage) {
+      setScrolled(true);
+      return;
+    }
     const handleScroll = () => setScrolled(window.scrollY > 16);
     handleScroll();
     window.addEventListener("scroll", handleScroll, { passive: true });
     return () => window.removeEventListener("scroll", handleScroll);
-  }, []);
+  }, [isHeroPage]);
 
   useEffect(() => {
     document.body.style.overflow = mobileOpen ? "hidden" : "";
